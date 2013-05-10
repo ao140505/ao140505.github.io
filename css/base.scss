@@ -1,0 +1,15 @@
+---
+---
+
+@mixin mobile {
+  @media (max-width: 480px) {
+    @content;
+  }
+}
+
+@import "normalize";
+@import "boilerplate";
+@import "font-awesome";
+@import "syntax";
+@import "global";
+@import "layout";

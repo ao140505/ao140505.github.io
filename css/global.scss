@@ -1,0 +1,131 @@
+$link_color: #333;
+$hover_color: rgb(42, 114, 213);
+
+body {
+  background: #F8F8F8;
+}
+
+li,
+p {
+  font-size: 1.1em;
+}
+
+.container {
+  max-width: 660px;
+  width: 88%;
+  margin: 0 auto;
+  @include mobile {
+    width: 92%;
+  }
+}
+
+.post-content img {
+  max-width: 100%;
+}
+
+a {
+  color: $link_color;
+  text-decoration: none;
+  transition: color 0.3s;
+
+  &:hover {
+    color: $hover_color;
+  }
+}
+
+#about .alex {
+  float: right;
+
+  @include mobile {
+    display: block;
+    float: none;
+    position: static;
+  }
+}
+
+img {
+  background: white;
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "PT Serif", Georgia, Times, "Times New Roman", serif;
+}
+
+pre {
+  padding: 10px;
+  background: #222;
+  border-radius: 5px;
+  white-space: pre;
+  overflow: auto;
+
+  code {
+    color: #d0d0d0;
+    background: transparent;
+    border: none;
+  }
+}
+
+code {
+  border: 1px solid #ddd;
+  background: white;
+  display: inline-block;
+  padding: 0 4px;
+  border-radius: 5px;
+}
+
+.post-title {
+  line-height: 1em;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: 'Signika Negative', sans-serif;
+}
+
+p {
+  font-family: 'Noto Serif', serif;
+}
+
+.all-posts,
+#about a,
+.post-content a {
+  color: rgb(42, 114, 213);
+  &:hover {
+    border-bottom: 1px dotted rgb(42, 114, 213);
+  }
+}
+
+.recent-posts,
+#all-posts {
+  .post {
+    transition-duration: 0.2s;
+    -webkit-transition-duration: 0.2s;
+    -moz-transition-duration: 0.2s;
+    padding: 1em 0;
+    margin: 0;
+    @include mobile {
+      padding: 0.75em 0;
+    }
+
+    &:hover {
+      padding-left: 1em;
+      padding-right: 1em;
+      background: lighten(#2a72d5, 20%);
+    }
+  }
+
+  .post-link:hover {
+    color: #333;
+  }
+
+  .post-date {
+    float: right;
+    @include mobile {
+      display: none;
+    }
+  }
+}
