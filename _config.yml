@@ -1,5 +1,5 @@
 markdown: redcarpet
 pygments: true
-exclude: [README.md]
+exclude: [README.md, Rakefile]
 include: [about]
 permalink: /blog/:year/:month/:day/:title/
