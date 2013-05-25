@@ -32,18 +32,20 @@
 
       <footer>
         <div class="container">
-          <div class="recent-posts">
-            <h2>Recent Posts</h2>
-            {% for post in site.posts limit: 5 %}
-            <a class="post-link" href="{{ post.url }}">
-              <p class="post">{{ post.title }}
-                <span class="post-date">{{ post.date | date: "%B %e, %Y"}}</span>
-              </p>
-            </a>
-            {% endfor %}
-            <p><a class="all-posts" href="/archive/">All posts</a></p>
-          </div>
-          <hr>
+          {% unless page.url == "/archive/index.html" %}
+            <div class="recent-posts">
+              <h2>Recent Posts</h2>
+              {% for post in site.posts limit: 5 %}
+              <a class="post-link" href="{{ post.url }}">
+                <p class="post">{{ post.title }}
+                  <span class="post-date">{{ post.date | date: "%B %e, %Y"}}</span>
+                </p>
+              </a>
+              {% endfor %}
+              <p><a class="all-posts" href="/archive/">All posts</a></p>
+            </div>
+            <hr>
+          {% endunless %}
           <p class="social">
             <a href="https://twitter.com/aokolish" target="_blank">
               <i class="icon-twitter"></i>
