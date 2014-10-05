@@ -47,7 +47,7 @@ cooking. Make something that is fun or useful for you.
 They don't exist.
 
 A website mentioned on this post implies that after completing their
-**one month rails course** you will be capable of landing a $120,000
+**one month rails course** you can land a $120,000
 programming job. I can assure you that is bullshit.
 
 ![smells like bullshit](/img/smells_like_bullshit.jpg)
