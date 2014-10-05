@@ -5,7 +5,7 @@ date: 2014-10-04
 comments: true
 ---
 
-I recently a [question on a
+I recently read this [question on a
 forum](https://railsforum.com/topic/1156-getting-started-with-rails/)
  paraphrased as:
 
