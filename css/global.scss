@@ -35,7 +35,12 @@ a {
 
 blockquote {
   font-style: italic;
-  font-size: 1.2em;
+  font-size: 1.1em;
+  border-top: 2px dotted #ccc;
+  border-bottom: 2px dotted #ccc;
+  margin: 1em 0;
+  padding: 0 30px;
+  text-align: center;
 }
 
 #about .alex {
