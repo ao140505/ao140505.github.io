@@ -3,6 +3,8 @@ layout: post
 title: How to Get Started With Rails
 date: 2014-10-04
 comments: true
+keywords: "get started, get started rails, how to rails"
+description: "How to get started with ruby on rails"
 ---
 
 I recently read this [question on a
