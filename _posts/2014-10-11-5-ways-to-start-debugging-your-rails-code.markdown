@@ -3,6 +3,8 @@ layout: post
 title: 5 ways to start debugging your rails code
 date: 2014-10-11
 comments: true
+keywords: "debugging rails, debug rails, debugging tips"
+description: "5 ways to start debugging your rails code"
 ---
 
 It can be really frustrating if you don't know how to debug your code.
