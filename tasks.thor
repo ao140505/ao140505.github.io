@@ -15,6 +15,8 @@ class Post < Thor
         title: #{title}
         date: #{date}
         comments: true
+        keywords: "foo, bar, baz"
+        description: "<put description here>"
         ---
       contents
     end
