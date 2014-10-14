@@ -35,7 +35,7 @@ end
 ```
 
 And you think that `@user.save` is not saving the @user. My favorite way to
-look into this is to use [pry](http://pryrepl.org/). Simply install pry
+look into this is to use [pry](http://pryrepl.org/). Install pry
 and insert a `binding.pry` into your code like so:
 
 ```ruby
@@ -74,8 +74,8 @@ Then, go check your logs to see if your `@user` is valid.
 
 ## 3. read the exception output
 
-This might sound crazy, but often time people simply do not read and
-think about exceptions when they occur.
+This might sound crazy, but often times people do not read or
+think about exceptions.
 
 ```
 `NoMethodError (undefined method 'first_name' for nil:NilClass)`
