@@ -28,7 +28,8 @@ header {
     padding: 0;
     margin: 0 0 0 30px;
     @include mobile {
-      margin-left: 15px;
+      margin-left: 0;
+      clear: both;
     }
 
     li {
@@ -44,6 +45,14 @@ header {
         line-height: 30px;
         margin-right: 15px;
       }
+    }
+  }
+
+  .twitter-share-button {
+    float: right;
+    margin-top: 14px;
+    @include mobile {
+      margin-top: 9px;
     }
   }
 }
