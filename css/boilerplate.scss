@@ -29,11 +29,11 @@ body {
  */
 
 ::-moz-selection {
-    background: lighten(#fa2900, 13%);
+    background: rgba(255, 93, 61, 0.71);
 }
 
 ::selection {
-    background: lighten(#fa2900, 13%);
+    background: rgba(255, 93, 61, 0.71);
 }
 
 /*

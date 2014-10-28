@@ -1,0 +1,57 @@
+#refactoring-on-rails {
+  h2 {
+    text-align: center;
+  }
+
+  em {
+    background: rgba(255, 93, 61, 0.71);
+    font-style: normal;
+  }
+
+  .headline {
+    font-size: 2.7em;
+    padding: 0 25px;
+    line-height: 1em;
+    margin: .7em 0;
+  }
+
+  #mc_embed_signup {
+    border: 2px dashed gray;
+    background: rgba(245, 222, 179, 0.43);
+    border-radius: 6px;
+    padding: 25px;
+    margin: 45px 10px;
+
+    h2 {
+      margin-top: 0;
+    }
+
+    .field-wrap {
+      width: 280px;
+      margin: 0 auto;
+
+      input {
+        margin: 7px 0;
+        width: 100%;
+        padding: 10px 20px;
+        border: 1px solid #aaa;
+        box-sizing: border-box;
+      }
+    }
+
+    #mc-embedded-subscribe {
+      background: #52961e;
+      color: #ffffff;
+      font-size: 20px;
+      text-decoration: none;
+      border: none;
+
+      &:focus,
+      &:hover {
+        text-decoration: none;
+        color: #444;
+      }
+    }
+
+  }
+}
