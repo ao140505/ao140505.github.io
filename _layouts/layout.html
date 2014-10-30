@@ -17,6 +17,7 @@
         {% capture description %}{% if page.description %}{{ page.description }}{% else %}{{ content | raw_content }}{% endif %}{% endcapture %}
         <meta name="description" content="{{ description | strip_html | condense_spaces | truncate:150 }}">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="google-site-verification" content="XA5dKuI49RXTWn5RxMyobOXEGgB6NjrbvtMFR30zbsY" />
         {% if page.keywords %}<meta name="keywords" content="{{ page.keywords }}">{% endif %}
         <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
         <link href='http://fonts.googleapis.com/css?family=Signika+Negative:400,700|Noto+Serif:400,700|Sansita+One' rel='stylesheet' type='text/css'>
