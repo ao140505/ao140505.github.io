@@ -140,22 +140,3 @@ p {
     }
   }
 }
-
-.newsletter-cta {
-  padding: 25px;
-  margin: 30px 0 35px;
-  background: #ECECEC;
-  border: 1px solid #DAD7D7;
-  border-radius: 12px;
-
-  p {
-    margin: 0;
-  }
-
-  a {
-    color: #2a72d5;
-    &:hover {
-      border-bottom: 1px dotted #2a72d5;
-    }
-  }
-}
