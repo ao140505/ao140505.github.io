@@ -1,16 +1,17 @@
 ---
 layout: post
-title: Rename a File Without Leaving Vim
+title: Rename a file without leaving Vim
 date: 2014-11-05
-comments: true
+comments: false
 keywords: "vim, rename file"
 description: "how to rename the current file in vim"
 ---
 
 Renaming files when you are coding can be a time consuming and annoying
-chore.
+chore. You just want to get it over with quickly so that
+you can get back to your real work.
 
-This is I used to do it:
+This is how I used to do it:
 
 ```
 1. suspend vim to get to the terminal
@@ -47,4 +48,6 @@ You **don't even have to leave vim**:
 3. press enter
 ```
 
-Reward yourself. You just saved yourself a few seconds per day :)
+Congrats. You just sharpened your tools and saved yourself a few seconds per day.
+
+{% include newsletter-cta.html bottomtext="Sign up for my newsletter to hear about more tips like this!" %}

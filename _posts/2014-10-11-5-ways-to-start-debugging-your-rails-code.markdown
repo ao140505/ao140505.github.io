@@ -121,3 +121,5 @@ an exception occured in there.
 
 You might find an exception in there. This is also a useful technique
 for finding n+1 and other sql problems.
+
+{% include newsletter-cta.html %}

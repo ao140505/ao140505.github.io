@@ -59,3 +59,5 @@ programming job. I can assure you that is bullshit.
 It takes time and effort to master this stuff. I have been learning to
 program for 6 years and still have plenty to learn. You do not need a
 computer science degree, but you do need to be persistant and put in the work.
+
+{% include newsletter-cta.html %}
