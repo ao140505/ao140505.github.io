@@ -3,3 +3,5 @@ highlighter: pygments
 exclude: [README.md, Rakefile, tasks.thor]
 include: [about]
 permalink: /blog/:year/:month/:day/:title/
+sass:
+  style: :compressed
