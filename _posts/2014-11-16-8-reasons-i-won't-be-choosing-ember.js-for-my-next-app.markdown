@@ -148,6 +148,11 @@ framework.
 > Sticking with the raw materials - HTML, CSS, and JavaScript is
 > much less limiting on your design than using a complex framework
 
+## 8. JavaScript
+
+I simply do not like JavaScript. I would rather write as
+much of my application in ruby as possible.
+
 ## Conclusion
 
 I wish I had known more about the problems I would face before diving into Ember.
