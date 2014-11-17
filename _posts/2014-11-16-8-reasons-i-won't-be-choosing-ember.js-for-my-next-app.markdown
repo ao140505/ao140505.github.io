@@ -150,8 +150,9 @@ framework.
 
 ## 8. JavaScript
 
-I simply do not like JavaScript. I would rather write as
-much of my application in ruby as possible.
+Writing most of your app in JavaScript is simly not fun. JavaScript is known
+for being designed in **10 days**. Ruby is known for being designed for
+**developer happiness** - *which sounds better to you?*
 
 ## Conclusion
 
