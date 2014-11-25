@@ -45,8 +45,10 @@ blockquote {
 
 #about .alex {
   float: right;
-  max-width: 330px;
 
+  @include desktop {
+    max-width: 330px;
+  }
   @include mobile {
     display: block;
     float: none;
