@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Changing Behavior is not Refactoring
-date: 2014-12-08
+date: 2014-12-14
 comments: true
 keywords: "refactoring, testing"
 description: "A quick story about what refactoring is not."
