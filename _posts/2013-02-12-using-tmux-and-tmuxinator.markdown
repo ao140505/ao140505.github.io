@@ -88,12 +88,6 @@ some of my favorites:
 * alerts to changes in other windows
 * vim-like key bindings - keep your fingers on home row
 
-## Note
-
-It seems like tmuxinator is no longer being maintained.
-That hasn't been a problem for me, but it could
-eventually cause issues.
-
 ## Further Reading
   * [tmux crash course](http://robots.thoughtbot.com/post/2641409235/a-tmux-crash-course) from thoughtbot
   * [tmux: producive mouse-free development](http://pragprog.com/book/bhtmux/tmux) - excellent intro
