@@ -2,7 +2,7 @@
 layout: post
 title: "Using Tmux and Tmuxinator"
 date: 2013-02-12 08:20
-comments: true
+comments: false
 published: true
 keywords: "ctags, vim, productivity, ruby"
 ---
