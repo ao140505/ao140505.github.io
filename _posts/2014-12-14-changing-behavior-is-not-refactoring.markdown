@@ -33,7 +33,7 @@ was creating a *gigantic* hash with about 20 keys in it and passing it on.
 Meanwhile, `SomeClass` appeared to only use one key from the
 hash.
 
-Clearly, that was innefficient and confusing. So, I committed my **small
+Clearly, that was inefficient and confusing. So, I committed my **small
 refactoring** to my build fix branch.
 
 ## Green Build
