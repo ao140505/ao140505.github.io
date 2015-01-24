@@ -1,0 +1,75 @@
+---
+layout: post
+title: "Goals for 2015: more writing, Mandarin, releasing a product"
+date: 2015-01-16
+comments: true
+keywords: "2015 goals, goals"
+description: "My goals for 2015"
+---
+
+## Blog more often
+
+Last year, I only wrote 5 posts. In 2015, I want to write much more
+than that - at least, two posts per month. I've set up a recurring task
+in [Ominfocus](https://www.omnigroup.com/omnifocus) to keep me honest.
+
+## Become fluent in Mandarin
+
+Over the past two years, I have been slowly learning Mandarin.
+By the end of this year, I want to be able to:
+
+* have a conversation with my wife's parents
+* talk with my wife's friends about work or kids
+* have a basic, written conversation with my wife
+
+I know that regular practice is critical. So, I'll be practicing speaking
+for at least 30 minutes per day, and reading for 15
+minutes per day.
+
+## Release my first product
+
+In the fall of 2014, I took [30x500](https://30x500.com/). I learned
+a lot, and I want to put the ideas into practice by releasing my first
+product.
+
+## Ride my bike more often
+
+I have been riding bikes for fun and exercise for about 6 years. In 2014,
+I was very inconsistent with my riding. You can see that here:
+
+<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/1LJhiBW9qgqBX0PccICzNGNmGbNh9HQ9DW08yDJQ4A4M/pubchart?oid=821998706&amp;format=interactive"></iframe>
+
+In 2015, I want to ride more consistently to stay in shape and make sure
+that I can keep up with my friends. I'll be shooting for 30 hours per
+month of riding.
+
+## Speak at a conference
+
+The thought of speaking at a conference scares the hell out of me,
+but I want to give it a shot this year. I think it will be great
+get out and meet more people in the tech community.
+
+## Show up on time
+
+I have an embarrassing habit of showing up late. It has slowly gotten
+worse over the last few years.
+
+I don't want to keep my friends and co-workers waiting on me so I'll be
+working on some [tiny habits](http://tinyhabits.com/) to get me where I
+need to be on time.
+
+## Be happier
+
+According to [The How of Happiness](
+http://www.amazon.com/gp/product/B0010O927W/ref=oh_aui_search_detailpage?ie=UTF8&psc=1),
+50% of your happiness is genetic, 10% is based on your circumstances,
+and the remaining 40% can be increased/decreased independently from your
+circumstances.
+
+Instead of focusing on the circumstances of my life
+(my job, salary, the city I live in, etc.), I want to try out the
+happiness strategies from the book that have more to do with your
+attitude and outlook on life.
+
+Each month, I will focus on one of the 12 happiness strategies per month from the
+book and do the exercises for that strategy.
