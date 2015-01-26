@@ -7,6 +7,12 @@ keywords: "2015 goals, goals"
 description: "My goals for 2015"
 ---
 
+Tracking something you want to improve is a great first step to
+improving it. Inspired by Amy Hoy's
+[2014 goals post](https://unicornfree.com/2015/a-meditation-on-goals),
+I decided to think about and write down my goals for this year. Here's
+what I'll be up to in 2015:
+
 ## Blog more often
 
 Last year, I only wrote 5 posts. In 2015, I want to write much more
@@ -73,3 +79,10 @@ attitude and outlook on life.
 
 Each month, I will focus on one of the 12 happiness strategies per month from the
 book and do the exercises for that strategy.
+
+## Your Turn
+
+Enough about me. What are your goals for 2015? Let me know in the
+comments.
+
+{% include newsletter-cta.html toptext="Want to become a better developer?" bottomtext="Get refactoring, ruby and rails tips in your inbox!" %}
