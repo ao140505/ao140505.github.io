@@ -96,3 +96,7 @@ some of my favorites:
   * [wemux](https://github.com/zolrath/wemux) - pairing with tmux
   * [tmux vs. screen](http://www.youtube.com/watch?v=QxTse5Elq8s)
     (youtube video)
+
+## Related Posts
+
+* [Start Your Project in Tmux With One Command]({% post_url 2015-02-16-how-to-start-your-app-in-tmux-with-one-command %})
