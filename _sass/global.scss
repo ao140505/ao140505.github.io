@@ -105,6 +105,11 @@ h2 + p {
   margin-top: 0.4em;
 }
 
+p + ol,
+p + ul {
+  margin-top: -14px;
+}
+
 p {
   font-family: 'Noto Serif', serif;
 }
