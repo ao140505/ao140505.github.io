@@ -33,23 +33,16 @@ Like a lot of things in Vim, you have a few choices.
 
 Just press `==`.
 
-**When to use it:** when you want to quickly correct one line.
-
 ## 2. Correct a chunk of text
 
 Press `=`, followed by a motion (j, k, p, G, etc.)
 
-**When to use it:** when you can think of a motion key for describing
-the text that you want to indent. I use `ap` ('around
-paragraph') a lot because I want to indent entire methods or chunks of
-CSS with one move.
+For example, I use `=ap` ('around paragraph') a lot
+to indent entire methods or chunks of CSS with one move.
 
 ## 3. Visual
 
 Visually select a block of text. Then, press `=`.
-
-**When to use it:** when you want to be totally sure you've selected the
-correct text before indenting it.
 
 ## The moves I use every day
 
@@ -65,15 +58,6 @@ These are my favorite ways to use `=`:
 
 Yup, no problem. Just do `gg=G`.
 
-## It's not working for me
-
-This happened to me a few times when I was editing a file with a new or
-weird file extension. I fixed it by checking these things:
-
-1. check that `:set filetype?` returns the correct file type
-2. check that you have an indent file for the file type in
-   `~/.vim/indent/`
-
 ## What is this magic?
 
 `=` is called a **filter**. I haven't found a great use for them other
@@ -86,3 +70,5 @@ Check the docs with `:help filter`.
 
 * [Rename a file without leaving Vim]({% post_url 2014-11-05-rename-a-file-without-leaving-vim %})
 * [Ctags in Vim]({% post_url 2012-10-15-ctags-in-vim %})
+
+{% include newsletter-cta.html toptext="Want to up your Vim game?" bottomtext="Sign up to get tips right in your inbox!" %}
