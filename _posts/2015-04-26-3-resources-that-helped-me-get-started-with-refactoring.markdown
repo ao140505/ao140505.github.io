@@ -25,7 +25,7 @@ help you get started. Here are three that helped me the most:
   to execute large refactorings in steps and small ones done quickly
   while fleshing out an idea.  The screencast format will help you pick up
   important things that books often omit such as:
-    * how to identify code that needs refactored
+    * how to identify code that needs to be refactored
     * how and when to run tests
     * how an editor can help with refactoring
 * [Refactoring](http://www.amazon.com/Refactoring-Improving-Design-Existing-Code/dp/0201485672/ref=sr_1_1?ie=UTF8&qid=1430373305&sr=8-1&keywords=refactoring):
