@@ -153,6 +153,16 @@ p {
     color: #333;
   }
 
+  @media (min-width: 480px) {
+    .post-title {
+      overflow: hidden;
+      max-width: 76%;
+      display: inline-block;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  }
+
   .post-date {
     float: right;
     @include mobile {
