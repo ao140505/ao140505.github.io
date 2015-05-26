@@ -16,7 +16,8 @@ layout: layout
     {% endunless %}
 
     <a class="post-link" href="{{ post.url }}">
-      <p class="post">{{ post.title }}
+      <p class="post">
+        <span class="post-title">{{ post.title }}</span>
         <span class="post-date">{{ post.date | date: "%B %e, %Y"}}</span>
       </p>
     </a>
