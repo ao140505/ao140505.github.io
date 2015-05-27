@@ -2,7 +2,7 @@
 layout: post
 title: How to simplify Active Record scopes that reference other models
 date: 2015-05-26
-comments: false
+comments: true
 keywords: "active record, scopes, sql fragments"
 description: "How to simplify Active Record scopes that reference other models"
 ---
