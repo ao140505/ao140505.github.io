@@ -2,6 +2,56 @@
 layout: layout
 ---
 
-{% assign post = site.posts.first %}
-{% assign content = post.content %}
-{% include post_detail.html %}
+<article id="about">
+  <h1>Hi, I'm Alex Okolish</h1>
+
+  <p>
+    I'm a developer living in San Francisco.
+  </p>
+
+  <p>
+    I have been making websites for about 7 years. I like honing my skills and learning
+    more about the tools I use every day (Ruby, Rails, Vim, Tmux, etc.).
+  </p>
+
+  <p>
+    If you like my writing and want to get more of it, you should sign up for my
+    free newsletter. I generally send out one article every two weeks or so.
+    You can sign up <a href="http://eepurl.com/4YwdH">here</a>.
+  </p>
+
+  <p>
+    You can also read a bit more about me <a href="/about/">here</a>.
+  </p>
+
+  <h2>Popular Posts</h2>
+
+  <ul>
+    <li><a href="{% post_url 2011-12-24-at-font-face-with-the-asset-pipeline %}">@font-face with the Asset Pipeline</a></li>
+    <li><a href="{% post_url 2013-02-12-using-tmux-and-tmuxinator %}">Using Tmux and Tmuxinator</a></li>
+    <li><a href="{% post_url 2012-01-22-testing-hover-events-with-capybara %}">Testing Hover Events with Capybara</a></li>
+    <li><a href="{% post_url 2014-11-05-rename-a-file-without-leaving-vim %}">Rename a file without leaving Vim</a></li>
+  </ul>
+
+  <p>
+    For more, browse my <a href="/archive/">full archive</a> of articles that
+    cover ruby, rails, tools I use to get work done faster, and more.
+  </p>
+
+  <h2>Contact</h2>
+
+  <p>
+    You can also find me throughout the interwebs on these sites:
+  </p>
+
+  <ul>
+    <li><a href="https://twitter.com/aokolish">Twitter</a></li>
+    <li><a href="https://www.linkedin.com/pub/alex-okolish/19/81/771">LinkedIn</a></li>
+    <li><a href="https://github.com/aokolish">Github</a></li>
+  </ul>
+
+  <p>
+    Have a question or something you want to run by me? Send me <a href="mailto:alex.okolish@gmail.com">an email</a>.
+  </p>
+
+</article>
