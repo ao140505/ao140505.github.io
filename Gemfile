@@ -1,6 +1,6 @@
 source "http://rubygems.org"
 
-gem 'jekyll', '~> 2.5.0'
+gem 'jekyll', '~> 3.6.3'
 gem 'redcarpet'
 gem 'sass'
 gem 'pry'
