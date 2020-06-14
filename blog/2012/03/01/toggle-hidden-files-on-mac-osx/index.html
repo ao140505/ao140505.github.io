@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        
+        <title>
+          
+            Toggle Hidden Files on Mac OSX
+          
+        </title>
+        
+        <meta name="description" content=" When I started doing development work on the Mac, I found it odd
+that there was no easy way to toggle the visibility of hidden files.
+Windows has ...">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="google-site-verification" content="XA5dKuI49RXTWn5RxMyobOXEGgB6NjrbvtMFR30zbsY" />
+        
+        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+        <link href='http://fonts.googleapis.com/css?family=Signika+Negative:400,700|Noto+Serif:400,700|Sansita+One' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" href="/css/base.css">
+    </head>
+    <body>
+      <header>
+        <div class="container">
+          <h1><a href="/">aokolish</a></h1>
+          <div id="header-nav">
+            <ul class="main-menu">
+              <li><a href="/about/">About</a></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <div class="container">
+        <h1 class="post-title">
+  
+    Toggle Hidden Files on Mac OSX
+  
+  
+</h1>
+
+<div class="post-content">
+  <p>When I started doing development work on the Mac, I found it odd
+that there was no easy way to toggle the visibility of hidden files.
+Windows has had a way to do this through the GUI for years. Typically,
+if you want to see hidden files on the Mac, you run something
+like this on the command line:</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">defaults write com.apple.finder AppleShowAllFiles <span class="nt">-boolean</span> TRUE
+killall Finder
+</code></pre></div>
+<p>And to hide them again you would run:</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">defaults write com.apple.finder AppleShowAllFiles <span class="nt">-boolean</span> FALSE
+killall Finder
+</code></pre></div>
+<p>If you find yourself wanting to see hidden files in the Finder, you may not have the
+terminal running. Plus, when I need to see hidden files,
+switching to the terminal to do this can be a disrupting
+change of context.</p>
+
+<p>With that in mind, let&#39;s come up with a way to toggle these two states
+while you are using the finder. I think it would be pretty slick if you
+could right-click while using the finder and select something like
+&#39;Toggle Hidden&#39; to pull this off. Automator, which comes with Mac OS X,
+makes this really simple.</p>
+
+<p>Open Automator and create a new Service. At the top of the workflow,
+change the drop downs such that they read &#39;Service receives selected
+files or folders in Finder ...&#39;. Find &#39;Run Shell Script&#39; and
+drag that on to your workflow. Paste the following code (courtesy of
+<a href="http://www.linkedin.com/pub/mack-corl/5/1a7/5b6">Mack Corl</a> ) into that
+script:</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">state</span><span class="o">=</span><span class="sb">`</span>defaults <span class="nb">read </span>com.apple.finder AppleShowAllFiles<span class="sb">`</span><span class="p">;</span>
+<span class="nv">newstate</span><span class="o">=</span><span class="s1">'TRUE'</span><span class="p">;</span>
+<span class="k">if</span> <span class="o">[</span> <span class="nv">$state</span> <span class="nt">-eq</span> 1 <span class="o">]</span><span class="p">;</span>
+<span class="k">then
+    </span><span class="nv">newstate</span><span class="o">=</span><span class="s1">'FALSE'</span><span class="p">;</span>
+<span class="k">fi</span>
+<span class="sb">`</span>defaults write com.apple.finder AppleShowAllFiles <span class="nt">-boolean</span> <span class="nv">$newstate</span><span class="p">;</span> killall Finder<span class="sb">`</span>
+</code></pre></div>
+<p>This code simply determines whether or not hidden files are visible
+and then sets them to the opposite state. Unfortunately, it also has to
+kill all of the finder windows in order for them to reflect that change (it can be a
+bit jarring/unexpected). Save this Service and give it a name such as
+&#39;Toggle Hidden&#39; Now, open the finder and right-click a file or folder -
+you should see your service in the context-menu and be able to test it
+out.</p>
+
+<p>Caveat: you must click on a file or folder in order for this service to show up in
+the context menu. What do you think? Useful?</p>
+
+</div>
+
+
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      var disqus_shortname = 'aokolish';
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  <!-- Go to www.addthis.com/dashboard to customize your tools -->
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-55666b2409e17b7d" async="async"></script>
+
+
+
+      </div>
+
+      <footer>
+        <div class="container">
+          
+            <div class="recent-posts">
+              <h2>Recent Posts</h2>
+              
+              <a class="post-link" href="/blog/2015/06/22/shortcuts-for-navigating-nested-associations/">
+                <p class="post">
+                  <span class="post-title">Shortcuts for navigating nested associations</span>
+                  <span class="post-date">June 22, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/06/10/how-much-sql-do-you-need-to-know-to-land-a-rails-job/">
+                <p class="post">
+                  <span class="post-title">How much SQL do you need to know to land a Rails job?</span>
+                  <span class="post-date">June 10, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/26/how-to-simplify-active-record-scopes-that-reference-other-tables/">
+                <p class="post">
+                  <span class="post-title">How to simplify Active Record scopes that reference other models</span>
+                  <span class="post-date">May 26, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/21/3-resources-that-helped-me-get-started-with-refactoring/">
+                <p class="post">
+                  <span class="post-title">3 resources that helped me get started with refactoring</span>
+                  <span class="post-date">May 21, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/03/31/correcting-indentation-in-vim/">
+                <p class="post">
+                  <span class="post-title">Correcting Indentation in Vim</span>
+                  <span class="post-date">March 31, 2015</span>
+                </p>
+              </a>
+              
+              <p><a class="all-posts" href="/archive/">All posts</a></p>
+            </div>
+            <hr>
+          
+          <p class="social">
+            <a href="https://twitter.com/aokolish" target="_blank">
+              <i class="icon-twitter"></i>
+            </a>
+            <a href="https://github.com/aokolish" target="_blank">
+              <i class="icon-github"></i>
+            </a>
+            <a href="mailto:alex.okolish@gmail.com">
+              <i class="icon-envelope"></i>
+            </a>
+          </p>
+        </div>
+      </footer>
+
+      <script>
+          var _gaq=[['_setAccount','UA-27939733-1'],['_trackPageview']];
+          (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+          g.src='//www.google-analytics.com/ga.js';
+          s.parentNode.insertBefore(g,s)}(document,'script'));
+      </script>
+    </body>
+</html>

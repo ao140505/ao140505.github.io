@@ -1,0 +1,2077 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[]]></title>
+  <link href="/atom.xml" rel="self"/>
+  <link href="/"/>
+  <updated>2020-06-13T19:44:24-07:00</updated>
+  <id>/</id>
+  <author>
+    <name><![CDATA[]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Shortcuts for navigating nested associations]]></title>
+    <link href="/blog/2015/06/22/shortcuts-for-navigating-nested-associations/"/>
+    <updated>2015-06-22T00:00:00-07:00</updated>
+    <id>/blog/2015/06/22/shortcuts-for-navigating-nested-associations</id>
+    <content type="html"><![CDATA[<p>As your rails app gets more complex you will end up with models that are
+related to each other but with one or more models between them.</p>
+
+<p>Say you have the following models:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">Order</span>
+  <span class="n">has_many</span> <span class="ss">:line_items</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">LineItem</span>
+  <span class="n">has_one</span> <span class="ss">:product</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Product</span>
+  <span class="n">belongs_to</span> <span class="ss">:line_item</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>In this case, an <code>Order</code> can have many products, but you have to go through
+line items to get to them.</p>
+
+<p>So, when you have an order, how do you get its products?</p>
+
+<p>At first, you might write something like this:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"> <span class="n">order</span><span class="p">.</span><span class="nf">line_items</span><span class="p">.</span><span class="nf">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:product</span><span class="p">)</span>
+</code></pre></div>
+<p>This might seem ok at first, until you realize there&#39;s an N+1 problem
+here. Getting the products this way will run one SQL query for every
+product in the order:</p>
+<div class="highlight"><pre><code class="language-" data-lang="">LineItem Load (0.2ms)  SELECT "line_items".* FROM "line_items" WHERE "line_items"."order_id" = ?  [["order_id", 5]]
+Product Load (0.1ms)  SELECT  "products".* FROM "products" WHERE "products"."id" = ? LIMIT 1  [["id", 7]]
+Product Load (0.1ms)  SELECT  "products".* FROM "products" WHERE "products"."id" = ? LIMIT 1  [["id", 8]]
+</code></pre></div>
+<p>Depending on your SQL skill level, you might realize there&#39;s a way to
+get the products with one query; it&#39;s just unclear how to do this with
+Active Record.</p>
+
+<h2>The Solution</h2>
+
+<p>It turns out there is an elegant way to solve this with active record
+associations. In the rails guide, they refer to this as a &#39;short cut&#39;
+between models. All we need to do is add this one line to the <code>Order</code> class:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">Order</span>
+  <span class="n">has_many</span> <span class="ss">:line_items</span>
+  <span class="n">has_many</span> <span class="ss">:products</span><span class="p">,</span> <span class="ss">through: :line_items</span> <span class="c1"># new code</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>With this &#39;short cut&#39; in place we can get from an order to products with
+one method call:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">order</span><span class="p">.</span><span class="nf">products</span>
+</code></pre></div>
+<p>And that loads the products with one SQL query:</p>
+<div class="highlight"><pre><code class="language-" data-lang="">Product Load (0.1ms)  SELECT "products".* FROM "products"
+INNER JOIN "line_items" ON "products"."id" = "line_items"."product_id"
+WHERE "line_items"."order_id" = ?  [["order_id", 5]]
+</code></pre></div>
+<p>Another <strong>really important difference</strong> between this code and the <code>map</code> solution is
+that <code>order.products</code> does not load the records right away - instead, it
+returns an
+<a href="http://edgeapi.rubyonrails.org/classes/ActiveRecord/Associations/CollectionProxy.html">ActiveRecord_Associations_CollectionProxy</a>.
+The <code>map</code> version returns an array.</p>
+
+<p>What the heck is a collection proxy and why is that a good thing?</p>
+
+<p>Basically, the proxy is something that allows you further refine the SQL
+by chaining method calls onto it.</p>
+
+<p>For example, say you only want the products for the order with a price
+greater than a certain amount:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">order</span><span class="p">.</span><span class="nf">products</span><span class="p">.</span><span class="nf">where</span><span class="p">(</span><span class="s1">'price &gt; 300'</span><span class="p">)</span>
+</code></pre></div>
+<p>Powerful stuff.</p>
+
+<h2>But wait, there&#39;s more</h2>
+
+<p>Let&#39;s introduce one more model into this example to make it more
+realistic. Say, we have a <code>User</code> model like this:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">User</span>
+  <span class="n">has_many</span> <span class="ss">:orders</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>Now, how can we get a list of all of the products a user has ordered
+before?</p>
+
+<p>This is the same kind of problem. We know they are related to
+each other, but the relationship spans several models.</p>
+
+<p>It turns out, this is trivial with Active Record. We can just add
+another &#39;short cut&#39; with <code>has_many through</code> in the user class:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">User</span>
+  <span class="n">has_many</span> <span class="ss">:products</span><span class="p">,</span> <span class="ss">through: :orders</span>
+<span class="k">end</span>
+
+<span class="c1"># then, we can do this</span>
+<span class="n">some_user</span><span class="p">.</span><span class="nf">products</span> <span class="o">=&gt;</span> <span class="n">it</span> <span class="n">works!</span>
+</code></pre></div>
+<h2>Be careful though</h2>
+
+<p>There is one thing to look out for  with this last example though. What
+if a user purchased the same product more than once?</p>
+
+<p>Calling <code>user.products</code> will return <em>duplicate products</em>.</p>
+
+<p>There are a few ways to work around this:</p>
+
+<p>1) Remember to call &#39;distinct&#39; wherever you need the products:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">some_user</span><span class="p">.</span><span class="nf">products</span><span class="p">.</span><span class="nf">distinct</span>
+</code></pre></div>
+<p>2) Change our has_many through declaration to always return distinct products:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">User</span>
+  <span class="n">has_many</span> <span class="ss">:products</span><span class="p">,</span> <span class="o">-&gt;</span> <span class="p">{</span> <span class="n">distinct</span> <span class="p">},</span> <span class="ss">through: :orders</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>So, depending on your schema and situation you may need to look out for
+duplicate records being returned.</p>
+
+<h2>Want to try it out?</h2>
+
+<p>I set up a <a href="https://github.com/aokolish/active-record-shortcuts">demo rails
+app</a> on GitHub with
+these exact models. If you want to see firsthand how this works, clone
+the repo and fire up a console to try out a few queries.</p>
+
+<div class="newsletter-cta">
+  <p>
+    <b>
+      
+        Enjoyed this post?
+      
+    </b>
+  </p>
+  <p>
+    
+      Get my best stuff, delivered for free.
+    
+  </p>
+  <!-- Begin MailChimp Signup Form -->
+  <div id="mc_embed_signup">
+    <form action="//aokolish.us9.list-manage.com/subscribe/post?u=fadcc7c47381f2394d5a3d05a&amp;id=b567f497d8" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+      <div id="mc_embed_signup_scroll">
+        <div class="field-wrap">
+          <input type="text" value="" name="FNAME" class="required" id="mce-FNAME" placeholder="Your first name">
+          <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Your email">
+          <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+          <div style="position: absolute; left: -5000px;"><input type="text" name="b_fadcc7c47381f2394d5a3d05a_b567f497d8" tabindex="-1" value=""></div>
+          <input type="submit" value="Sign me up!" name="subscribe" id="mc-embedded-subscribe" class="button">
+        </div>
+      </div>
+    </form>
+  </div>
+  <!--End mc_embed_signup-->
+</div>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[How much SQL do you need to know to land a Rails job?]]></title>
+    <link href="/blog/2015/06/10/how-much-sql-do-you-need-to-know-to-land-a-rails-job/"/>
+    <updated>2015-06-10T00:00:00-07:00</updated>
+    <id>/blog/2015/06/10/how-much-sql-do-you-need-to-know-to-land-a-rails-job?</id>
+    <content type="html"><![CDATA[<p>Interviewing for Rails jobs can be really tough. You have to know a lot
+of different things to be a good rails developer:</p>
+
+<ul>
+<li>Ruby</li>
+<li>Rails</li>
+<li>Javascript</li>
+<li>CSS</li>
+<li>HTML</li>
+<li>deployment</li>
+<li>Git</li>
+<li>SQL</li>
+<li>the list goes on...</li>
+</ul>
+
+<p>You might not need to know <em>all</em> of that if you specialize in
+front-end or back-end only. But, you will need to know a good
+chunk of it.</p>
+
+<p>Over the last few years, I&#39;ve interviewed for roughly 30 rails jobs and
+have been rejected for every reason imaginable.</p>
+
+<p>I bombed a ton of interviews by being bad at whiteboarding
+and CS questions (I <a href="/blog/2013/05/11/finding-a-job/">wrote about that</a>
+previously), but I also struggled with SQL questions in some of them.</p>
+
+<h2>Do you need to be a DBA to get an offer?</h2>
+
+<p>When you head into a rails job interview, it&#39;s unlikely that SQL is
+going to be the focus of the interview because...</p>
+
+<ul>
+<li>rails devs don&#39;t often need to write queries by hand because they have
+Active Record</li>
+<li>SQL is fairly complex and cumbersome to write</li>
+<li>a solid rails developer needs to know a variety of other things that
+they may ask you about</li>
+</ul>
+
+<p>With that said, there is a good chance that you&#39;ll be asked a few
+SQL questions.</p>
+
+<h2>The SQL you need to know</h2>
+
+<p>So, you don&#39;t need to be a DBA, but you will need to know some SQL. The
+amount you need to know will vary based on your experience, the
+position, and the interviewer.</p>
+
+<p>Here are the most common questions I&#39;ve been asked when interviewing for
+rails jobs:</p>
+
+<ol>
+<li>What is a join? What types of joins are there?</li>
+<li>What is the difference between an inner join and a left join?</li>
+<li>What is an index? When should you use one?</li>
+<li>What is a join table? When would you use one?</li>
+<li>Which Active Record association should you use in [X] situation?</li>
+<li>Given [X] association (has_one, has_many, belongs_to, etc.),
+what database schema is needed for this association to work?</li>
+</ol>
+
+<p>Once you can answer these, SQL questions are unlikely to block you from
+getting an offer at your next interview.</p>
+
+<h2>How you can learn this stuff</h2>
+
+<p>I learned all of this in bits and pieces and by fumbling around with it
+for years.</p>
+
+<p>If you want to learn SQL more quickly than I did, I suggest you do the
+following:</p>
+
+<ul>
+<li>pick up a good book on SQL (when I was a .NET
+developer, I read <a href="http://www.amazon.com/gp/product/1890774510?psc=1&redirect=true&ref_=oh_aui_search_detailpage">this
+one</a> -
+it was boring, but helpful)</li>
+<li>learn about the SQL that Active Record is generating for you in your
+current code (look into the <code>to_sql</code> method, and <a href="http://stackoverflow.com/questions/2936000/how-to-show-sql-queries-run-in-the-rails-console">logging SQL to the
+console</a>
+as you run and experiment with queries)</li>
+<li>ask your friends and co-workers to explain concepts you don&#39;t
+understand</li>
+<li>finally, search online - you can find good info online once you know what
+you need to know</li>
+</ul>
+
+<div class="newsletter-cta">
+  <p>
+    <b>
+      
+        Enjoyed this post?
+      
+    </b>
+  </p>
+  <p>
+    
+      Get my best stuff, delivered for free.
+    
+  </p>
+  <!-- Begin MailChimp Signup Form -->
+  <div id="mc_embed_signup">
+    <form action="//aokolish.us9.list-manage.com/subscribe/post?u=fadcc7c47381f2394d5a3d05a&amp;id=b567f497d8" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+      <div id="mc_embed_signup_scroll">
+        <div class="field-wrap">
+          <input type="text" value="" name="FNAME" class="required" id="mce-FNAME" placeholder="Your first name">
+          <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Your email">
+          <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+          <div style="position: absolute; left: -5000px;"><input type="text" name="b_fadcc7c47381f2394d5a3d05a_b567f497d8" tabindex="-1" value=""></div>
+          <input type="submit" value="Sign me up!" name="subscribe" id="mc-embedded-subscribe" class="button">
+        </div>
+      </div>
+    </form>
+  </div>
+  <!--End mc_embed_signup-->
+</div>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[How to simplify Active Record scopes that reference other models]]></title>
+    <link href="/blog/2015/05/26/how-to-simplify-active-record-scopes-that-reference-other-tables/"/>
+    <updated>2015-05-26T00:00:00-07:00</updated>
+    <id>/blog/2015/05/26/how-to-simplify-active-record-scopes-that-reference-other-tables</id>
+    <content type="html"><![CDATA[<p>Active Record scopes are a great way to introduce domain terms into
+your code without repeating queries all over the place.</p>
+
+<p>What happens when you want to reuse a scope from one model in another?</p>
+
+<p>Let&#39;s go through an example.</p>
+
+<p>Say we have two models: <code>Customer</code> and <code>Device</code>. And a customer <code>has_one
+:device</code>.</p>
+
+<p>Within <code>Device</code>, I&#39;ve written a scope to select devices that have
+been shipped. It looks like this:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">Device</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+  <span class="n">scope</span> <span class="ss">:shipped</span><span class="p">,</span> <span class="o">-&gt;</span> <span class="p">{</span>
+    <span class="n">where</span><span class="p">.</span><span class="nf">not</span><span class="p">(</span><span class="ss">shipped_at: </span><span class="kp">nil</span><span class="p">)</span>
+  <span class="p">}</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>Later on, you want to add a scope to <code>Customer</code> to select all of
+the customers with a shipped device.</p>
+
+<p>Here&#39;s how I would normally write that:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">Customer</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+  <span class="n">scope</span> <span class="ss">:with_shipped_device</span><span class="p">,</span> <span class="o">-&gt;</span> <span class="p">{</span>
+    <span class="n">joins</span><span class="p">(</span><span class="ss">:device</span><span class="p">).</span><span class="nf">where</span><span class="p">.</span><span class="nf">not</span><span class="p">(</span><span class="ss">device: </span><span class="p">{</span><span class="ss">shipped_at: </span><span class="kp">nil</span><span class="p">})</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>And here&#39;s the SQL this produces:</p>
+<div class="highlight"><pre><code class="language-" data-lang="">SELECT `customers`.* FROM `customers`
+INNER JOIN `devices` ON `devices`.`customer_id` = `customers`.`id`
+WHERE (`devices`.`shipped_at` IS NOT NULL)
+</code></pre></div>
+<p>A few things bug me about this code:</p>
+
+<ol>
+<li>The implementation of both scopes is almost identical</li>
+<li>I&#39;m not getting to re-use my scope on the <code>Device</code> model</li>
+<li>Instead of using my domain terms, I&#39;m pretty much writing SQL</li>
+</ol>
+
+<h2>Enter Relation#merge</h2>
+
+<p>It turns out, there is a way to reduce this type of duplication. You can
+call <code>merge</code> on any Active Record relation to merge in other scopes -
+and it works across models.</p>
+
+<p>So, the scope on <code>Customer</code> can be rewritten like so:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">Customer</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+  <span class="n">scope</span> <span class="ss">:with_shipped_device</span><span class="p">,</span> <span class="o">-&gt;</span> <span class="p">{</span>
+    <span class="n">joins</span><span class="p">(</span><span class="ss">:device</span><span class="p">).</span><span class="nf">merge</span><span class="p">(</span><span class="no">Device</span><span class="p">.</span><span class="nf">shipped</span><span class="p">)</span>
+  <span class="p">}</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>This produces the exact same SQL query shown above.</p>
+
+<p>I like this code better because...</p>
+
+<ul>
+<li>it&#39;s shorter</li>
+<li>the query for selecting shipped devices is in one place</li>
+<li>it&#39;s easier to reason about; a customer with a shipped device is a
+just that - a customer with a shipped device</li>
+</ul>
+
+<p>Check out <code>merge</code> to see if it helps you improve your scopes.</p>
+
+<div class="newsletter-cta">
+  <p>
+    <b>
+      
+        Enjoyed this post?
+      
+    </b>
+  </p>
+  <p>
+    
+      Get my best stuff, delivered for free.
+    
+  </p>
+  <!-- Begin MailChimp Signup Form -->
+  <div id="mc_embed_signup">
+    <form action="//aokolish.us9.list-manage.com/subscribe/post?u=fadcc7c47381f2394d5a3d05a&amp;id=b567f497d8" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+      <div id="mc_embed_signup_scroll">
+        <div class="field-wrap">
+          <input type="text" value="" name="FNAME" class="required" id="mce-FNAME" placeholder="Your first name">
+          <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Your email">
+          <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+          <div style="position: absolute; left: -5000px;"><input type="text" name="b_fadcc7c47381f2394d5a3d05a_b567f497d8" tabindex="-1" value=""></div>
+          <input type="submit" value="Sign me up!" name="subscribe" id="mc-embedded-subscribe" class="button">
+        </div>
+      </div>
+    </form>
+  </div>
+  <!--End mc_embed_signup-->
+</div>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[3 resources that helped me get started with refactoring]]></title>
+    <link href="/blog/2015/05/21/3-resources-that-helped-me-get-started-with-refactoring/"/>
+    <updated>2015-05-21T00:00:00-07:00</updated>
+    <id>/blog/2015/05/21/3-resources-that-helped-me-get-started-with-refactoring</id>
+    <content type="html"><![CDATA[<p>If you are looking to get into refactoring but don&#39;t know where to
+start, there are a lot of good resources out there to
+help you get started. Here are three that helped me the most:</p>
+
+<ul>
+<li><p><a href="http://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882">Clean Code</a>:
+This is one of my favorite programming books. I think it&#39;s a great
+book to start with because it will help you answer this question -
+what is clean code? Until you can answer that, you&#39;ll get
+lost refactoring code because you won&#39;t have a clear picture of what
+you want it to end up with.</p></li>
+<li><p><a href="https://www.destroyallsoftware.com/screencasts">Destroy All Software</a>:
+Fantastic screencasts from Gary Bernhardt. I love DAS because the
+screencasts are fast, to the point, and
+often use real code rather than contrived examples. You&#39;ll learn how
+to execute large refactorings in steps and small ones done quickly
+while fleshing out an idea.  The screencast format will help you pick up
+important things that books often omit such as:</p>
+
+<ul>
+<li>how to identify code that needs to be refactored</li>
+<li>how and when to run tests</li>
+<li>how an editor can help with refactoring</li>
+</ul></li>
+<li><p><a href="http://www.amazon.com/Refactoring-Improving-Design-Existing-Code/dp/0201485672/ref=sr_1_1?ie=UTF8&qid=1430373305&sr=8-1&keywords=refactoring">Refactoring</a>:
+This is the book that everyone recommends. It has a chapter for each
+refactoring pattern (e.g. Rename Variable, Extract Temp, etc.) with
+info on each pattern - why to use it, and what the code looks like
+before and after the refactoring, and some guidelines. I put this
+last because I found it a bit boring compared to Destroy All Software.</p></li>
+</ul>
+
+<p>If you&#39;ve been trying to refactor your code without much guidance, any
+of these will quickly help take your refactoring to the next level.
+Enjoy!</p>
+
+<div class="newsletter-cta">
+  <p>
+    <b>
+      
+        Want more refactoring tips?
+      
+    </b>
+  </p>
+  <p>
+    
+      Sign up to get tips right in your inbox!
+    
+  </p>
+  <!-- Begin MailChimp Signup Form -->
+  <div id="mc_embed_signup">
+    <form action="//aokolish.us9.list-manage.com/subscribe/post?u=fadcc7c47381f2394d5a3d05a&amp;id=b567f497d8" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+      <div id="mc_embed_signup_scroll">
+        <div class="field-wrap">
+          <input type="text" value="" name="FNAME" class="required" id="mce-FNAME" placeholder="Your first name">
+          <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Your email">
+          <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+          <div style="position: absolute; left: -5000px;"><input type="text" name="b_fadcc7c47381f2394d5a3d05a_b567f497d8" tabindex="-1" value=""></div>
+          <input type="submit" value="Sign me up!" name="subscribe" id="mc-embedded-subscribe" class="button">
+        </div>
+      </div>
+    </form>
+  </div>
+  <!--End mc_embed_signup-->
+</div>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Correcting Indentation in Vim]]></title>
+    <link href="/blog/2015/03/31/correcting-indentation-in-vim/"/>
+    <updated>2015-03-31T00:00:00-07:00</updated>
+    <id>/blog/2015/03/31/correcting-indentation-in-vim</id>
+    <content type="html"><![CDATA[<p>Have you ever pasted code into Vim only to find that the formatting is
+completely messed up?</p>
+
+<p>Me too. And I used to find it really annoying, because it would take me
+roughly forever to correct every line, one at a time.</p>
+
+<p>Eventually, I realized that I changed indentation a lot. Like when I...</p>
+
+<ul>
+<li>move Sass to a place that is more or less indented</li>
+<li>copy CSS from Chrome into Vim</li>
+<li>refactor ruby code</li>
+</ul>
+
+<p>It felt silly to spend so much time fixing indentation. I figured
+there was a better way.</p>
+
+<p><code>=</code> is the key I was looking for. Once you learn how to use it, you will
+never want to go back to using any other text editor.</p>
+
+<h2>How do I use <code>=</code>?</h2>
+
+<p>Like a lot of things in Vim, you have a few choices.</p>
+
+<h2>1. Correct one line</h2>
+
+<p>Just press <code>==</code>.</p>
+
+<h2>2. Correct a chunk of text</h2>
+
+<p>Press <code>=</code>, followed by a motion (j, k, p, G, etc.)</p>
+
+<p>For example, I use <code>=ap</code> (&#39;around paragraph&#39;) a lot
+to indent entire methods or chunks of CSS with one move.</p>
+
+<h2>3. Visual</h2>
+
+<p>Visually select a block of text. Then, press <code>=</code>.</p>
+
+<h2>The moves I use every day</h2>
+
+<p>These are my favorite ways to use <code>=</code>:</p>
+<div class="highlight"><pre><code class="language-" data-lang=""> == - correct the current line
+=ap - correct the current 'paragraph'
+ =G - correct to the end of the file
+</code></pre></div>
+<h2>Can I correct an entire file?</h2>
+
+<p>Yup, no problem. Just do <code>gg=G</code>.</p>
+
+<h2>What is this magic?</h2>
+
+<p><code>=</code> is called a <strong>filter</strong>. I haven&#39;t found a great use for them other
+than <code>=</code>, but you can do some crazy things like run text through shell
+programs such as <code>sort</code> and <code>uniq</code>.</p>
+
+<p>Check the docs with <code>:help filter</code>.</p>
+
+<h2>Related Posts</h2>
+
+<ul>
+<li><a href="/blog/2014/11/05/rename-a-file-without-leaving-vim/">Rename a file without leaving Vim</a></li>
+<li><a href="/blog/2012/10/15/ctags-in-vim/">Ctags in Vim</a></li>
+</ul>
+
+<div class="newsletter-cta">
+  <p>
+    <b>
+      
+        Want to up your Vim game?
+      
+    </b>
+  </p>
+  <p>
+    
+      Sign up to get tips right in your inbox!
+    
+  </p>
+  <!-- Begin MailChimp Signup Form -->
+  <div id="mc_embed_signup">
+    <form action="//aokolish.us9.list-manage.com/subscribe/post?u=fadcc7c47381f2394d5a3d05a&amp;id=b567f497d8" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+      <div id="mc_embed_signup_scroll">
+        <div class="field-wrap">
+          <input type="text" value="" name="FNAME" class="required" id="mce-FNAME" placeholder="Your first name">
+          <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Your email">
+          <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+          <div style="position: absolute; left: -5000px;"><input type="text" name="b_fadcc7c47381f2394d5a3d05a_b567f497d8" tabindex="-1" value=""></div>
+          <input type="submit" value="Sign me up!" name="subscribe" id="mc-embedded-subscribe" class="button">
+        </div>
+      </div>
+    </form>
+  </div>
+  <!--End mc_embed_signup-->
+</div>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Start Your Rails App in Tmux With One Command]]></title>
+    <link href="/blog/2015/02/16/how-to-start-your-app-in-tmux-with-one-command/"/>
+    <updated>2015-02-16T00:00:00-08:00</updated>
+    <id>/blog/2015/02/16/how-to-start-your-app-in-tmux-with-one-command</id>
+    <content type="html"><![CDATA[<p>This is what happens when most people decide to sit down and work on
+their rails app:</p>
+
+<p style="text-align:center;">
+  <img src="/img/starting-a-rails-app.png" alt="starting a rails app">
+</p>
+
+<p>It takes a lot of steps to go from want to work on a rails app to
+having it up and running.</p>
+
+<h2>What if you can&#39;t remember how to start the app?</h2>
+
+<p>Starting your rails app only goes this smoothly when
+you know what you need to start and the commands
+to start everything. When this is not the case, you may have to slog
+through the Readme first - ugh.</p>
+
+<h2>Every Rails app is a little different</h2>
+
+<p><strong>Every rails app that I&#39;ve worked on is slightly different from the last</strong>
+- different background job runners, different database
+servers, different ruby versions, and so forth. That means slightly
+different commands are needed to start each one of them.</p>
+
+<p>And while your side project is written in rails, there&#39;s a good chance
+that you work on completely different types of frameworks and languages.
+Remembering how to start all of these projects can quickly turn into
+a nightmare.</p>
+
+<p>I got tired of all of this. I searched for something that could...</p>
+
+<ul>
+<li>remember how to start my app so I don&#39;t have to read the Readme every
+time I start it</li>
+<li>start everything I needed with <strong>one command</strong></li>
+<li>handle <strong>any type of app</strong> - sinatra, rails, jekyll, Angular, etc.</li>
+</ul>
+
+<h2>Enter Tmuxinator</h2>
+
+<p>Let me show you how I start my projects:</p>
+
+<p><iframe src="//fast.wistia.net/embed/iframe/iai2q400qk?videoFoam=true" allowtransparency="true" frameborder="0" scrolling="no" class="wistia_embed" name="wistia_embed" allowfullscreen mozallowfullscreen webkitallowfullscreen oallowfullscreen msallowfullscreen width="1280" height="748"></iframe><script src="//fast.wistia.net/assets/external/E-v1.js"></script></p>
+
+<p>Ready to get started with Tmuxinator? Check out my
+<a href="/blog/2013/02/12/using-tmux-and-tmuxinator/">earlier post on Tmuxinator</a>
+for the details.</p>
+
+<div class="newsletter-cta">
+  <p>
+    <b>
+      
+        Want more?
+      
+    </b>
+  </p>
+  <p>
+    
+      Sign up for my newsletter to hear about more tips like this!
+    
+  </p>
+  <!-- Begin MailChimp Signup Form -->
+  <div id="mc_embed_signup">
+    <form action="//aokolish.us9.list-manage.com/subscribe/post?u=fadcc7c47381f2394d5a3d05a&amp;id=b567f497d8" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+      <div id="mc_embed_signup_scroll">
+        <div class="field-wrap">
+          <input type="text" value="" name="FNAME" class="required" id="mce-FNAME" placeholder="Your first name">
+          <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Your email">
+          <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+          <div style="position: absolute; left: -5000px;"><input type="text" name="b_fadcc7c47381f2394d5a3d05a_b567f497d8" tabindex="-1" value=""></div>
+          <input type="submit" value="Sign me up!" name="subscribe" id="mc-embedded-subscribe" class="button">
+        </div>
+      </div>
+    </form>
+  </div>
+  <!--End mc_embed_signup-->
+</div>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Goals for 2015: more writing, Mandarin, releasing a product]]></title>
+    <link href="/blog/2015/01/16/goals-for-2015/"/>
+    <updated>2015-01-16T00:00:00-08:00</updated>
+    <id>/blog/2015/01/16/goals-for-2015</id>
+    <content type="html"><![CDATA[<p>Tracking something you want to improve is a great first step to
+improving it. Inspired by Amy Hoy&#39;s
+<a href="https://unicornfree.com/2015/a-meditation-on-goals">2014 goals post</a>,
+I decided to think about and write down my goals for this year. Here&#39;s
+what I&#39;ll be up to in 2015:</p>
+
+<h2>Blog more often</h2>
+
+<p>Last year, I only wrote 5 posts. In 2015, I want to write much more
+than that - at least, two posts per month. I&#39;ve set up a recurring task
+in <a href="https://www.omnigroup.com/omnifocus">Ominfocus</a> to keep me honest.</p>
+
+<h2>Become fluent in Mandarin</h2>
+
+<p>Over the past two years, I have been slowly learning Mandarin.
+By the end of this year, I want to be able to:</p>
+
+<ul>
+<li>have a conversation with my wife&#39;s parents</li>
+<li>talk with my wife&#39;s friends about work or kids</li>
+<li>have a basic, written conversation with my wife</li>
+</ul>
+
+<p>I know that regular practice is critical. So, I&#39;ll be practicing speaking
+for at least 30 minutes per day, and reading for 15
+minutes per day.</p>
+
+<h2>Release my first product</h2>
+
+<p>In the fall of 2014, I took <a href="https://30x500.com/">30x500</a>. I learned
+a lot, and I want to put the ideas into practice by releasing my first
+product.</p>
+
+<h2>Ride my bike more often</h2>
+
+<p>I have been riding bikes for fun and exercise for about 6 years. In 2014,
+I was very inconsistent with my riding. You can see that here:</p>
+
+<iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/1LJhiBW9qgqBX0PccICzNGNmGbNh9HQ9DW08yDJQ4A4M/pubchart?oid=821998706&amp;format=interactive"></iframe>
+
+<p>In 2015, I want to ride more consistently to stay in shape and make sure
+that I can keep up with my friends. I&#39;ll be shooting for 30 hours per
+month of riding.</p>
+
+<h2>Speak at a conference</h2>
+
+<p>The thought of speaking at a conference scares the hell out of me,
+but I want to give it a shot this year. I think it will be great
+get out and meet more people in the tech community.</p>
+
+<h2>Show up on time</h2>
+
+<p>I have an embarrassing habit of showing up late. It has slowly gotten
+worse over the last few years.</p>
+
+<p>I don&#39;t want to keep my friends and co-workers waiting on me so I&#39;ll be
+working on some <a href="http://tinyhabits.com/">tiny habits</a> to get me where I
+need to be on time.</p>
+
+<h2>Be happier</h2>
+
+<p>According to <a href="http://www.amazon.com/gp/product/B0010O927W/ref=oh_aui_search_detailpage?ie=UTF8&psc=1">The How of Happiness</a>,
+50% of your happiness is genetic, 10% is based on your circumstances,
+and the remaining 40% can be increased/decreased independently from your
+circumstances.</p>
+
+<p>Instead of focusing on the circumstances of my life
+(my job, salary, the city I live in, etc.), I want to try out the
+happiness strategies from the book that have more to do with your
+attitude and outlook on life.</p>
+
+<p>Each month, I will focus on one of the 12 happiness strategies per month from the
+book and do the exercises for that strategy.</p>
+
+<h2>Your Turn</h2>
+
+<p>Enough about me. What are your goals for 2015? Let me know in the
+comments.</p>
+
+<div class="newsletter-cta">
+  <p>
+    <b>
+      
+        Want to become a better developer?
+      
+    </b>
+  </p>
+  <p>
+    
+      Get refactoring, ruby and rails tips in your inbox!
+    
+  </p>
+  <!-- Begin MailChimp Signup Form -->
+  <div id="mc_embed_signup">
+    <form action="//aokolish.us9.list-manage.com/subscribe/post?u=fadcc7c47381f2394d5a3d05a&amp;id=b567f497d8" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+      <div id="mc_embed_signup_scroll">
+        <div class="field-wrap">
+          <input type="text" value="" name="FNAME" class="required" id="mce-FNAME" placeholder="Your first name">
+          <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Your email">
+          <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+          <div style="position: absolute; left: -5000px;"><input type="text" name="b_fadcc7c47381f2394d5a3d05a_b567f497d8" tabindex="-1" value=""></div>
+          <input type="submit" value="Sign me up!" name="subscribe" id="mc-embedded-subscribe" class="button">
+        </div>
+      </div>
+    </form>
+  </div>
+  <!--End mc_embed_signup-->
+</div>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Changing Behavior is not Refactoring]]></title>
+    <link href="/blog/2014/12/14/changing-behavior-is-not-refactoring/"/>
+    <updated>2014-12-14T00:00:00-08:00</updated>
+    <id>/blog/2014/12/14/changing-behavior-is-not-refactoring</id>
+    <content type="html"><![CDATA[<p>I recently inherited a new rails app with a broken build. In fact,
+<strong>20% of the tests for this app were failing</strong>.</p>
+
+<p>If fixing the build <em>sucks</em>, fixing someone else&#39;s build sucks even more.</p>
+
+<h2>Smelly Code</h2>
+
+<p>In the process of fixing the build, I
+read a decent amount of code that seemed smelly to me. One
+failing test caused me to uncover a line of code that seemed extra odd:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="no">SomeClass</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">params</span><span class="p">.</span><span class="nf">except</span><span class="p">(</span><span class="ss">:foo</span><span class="p">,</span> <span class="ss">:bar</span><span class="p">,</span> <span class="ss">:baz</span><span class="p">))</span>
+</code></pre></div>
+<p>I thought it would be better to do this:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="no">SomeClass</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">params</span><span class="p">.</span><span class="nf">select</span><span class="p">(</span><span class="ss">:foo</span><span class="p">))</span>
+</code></pre></div>
+<p>I thought this was a nice improvement because the old code
+was creating a <em>gigantic</em> hash with about 20 keys in it and passing it on.
+Meanwhile, <code>SomeClass</code> appeared to only use one key from the
+hash.</p>
+
+<p>Clearly, that was inefficient and confusing. So, I committed my <strong>small
+refactoring</strong> to my build fix branch.</p>
+
+<h2>Green Build</h2>
+
+<p>Once the build was green, I deployed the app to production (including
+my one line improvement). The rest of the day was quiet and everything seemed fine.</p>
+
+<p>24 hours later, I got a <em>nasty surprise</em> in the middle of my day off -
+my one line change had actually broken the site&#39;s <strong>most critical feature</strong>!</p>
+
+<p><img src="/img/ya-blew-it.png" alt="ya blew it"></p>
+
+<h2>This is not refactoring</h2>
+
+<p>I thought my one line change was harmless, but it broke the site for
+users and messed up my Saturday. What went wrong here?</p>
+
+<p>In hindsight, I was really fixing a defect - I knew I was changing the behavior
+of the code and that there was some risk that it could have unintended
+consequences.</p>
+
+<h2>How you can avoid this</h2>
+
+<p>Recognize that bug fixing and refactoring are two distinctly different activities.</p>
+
+<p><strong>Changing the behavior of the code is not refactoring!</strong></p>
+
+<p>Additionally, recognize that refactoring is going to be risky until
+you have certain things in place such as:</p>
+
+<ul>
+<li>familiarity with the business you work for</li>
+<li>passing tests</li>
+<li>decent test coverage</li>
+<li>integration tests</li>
+</ul>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[8 Reasons to not use Ember.js for your next project]]></title>
+    <link href="/blog/2014/11/16/8-reasons-i-won't-be-choosing-ember.js-for-my-next-app/"/>
+    <updated>2014-11-16T00:00:00-08:00</updated>
+    <id>/blog/2014/11/16/8-reasons-i-won't-be-choosing-ember.js-for-my-next-app</id>
+    <content type="html"><![CDATA[<p>I was very fortunate a few months ago to have the opportunity to learn
+and use Ember.js to build a dashboard within an existing rails
+application.</p>
+
+<p>The dashboard felt like a standalone app within our main site
+and we wanted it to feel very snappy. We decided to give Ember a
+shot for building it.</p>
+
+<p>I worked on this with a co-worker and it took us about
+3 months to complete our project.</p>
+
+<p>This post describes a few of the reasons I would strongly hesitate to
+reach for this type of framework again. If you are considering investing
+time into learning a client-side MVC framework, I suggest you read this
+to see what problems you might run into.</p>
+
+<h2>1. Silent errors</h2>
+
+<p>One thing that really frustrated me about developing in Ember is all of
+the silent failures we encountered. We had to be very vigilant not to
+check in code that caused these silent failures.</p>
+
+<p>For example, take this mustache template that has a typo in it:</p>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;p&gt;</span>{{user.first_nam}}<span class="nt">&lt;/p&gt;</span>
+</code></pre></div>
+<p>This code is wrong. Yet, it doesn&#39;t even cause a <strong>JavaScript error</strong>.</p>
+
+<p>An ERB or Haml version of this same template would fail loudly
+with a <code>NoMethodError</code>; the code would never make it to production.</p>
+
+<blockquote>
+<p>Silent failures do not make my job easier</p>
+</blockquote>
+
+<h2>2. Deep linking - unreliable</h2>
+
+<p>Ember&#39;s router seemed like a great feature to me. I liked that every
+page of our app would have a URL - just like a server-side app.
+As our app became more complex though, deep linking started
+<strong>randomly not working</strong>.</p>
+
+<p>For example, consider these Ember routes:</p>
+<div class="highlight"><pre><code class="language-" data-lang="">/users/
+/users/15/
+/users/15/photos/
+</code></pre></div>
+<p>We ran into situations where this would work:</p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. load app and end up on /users/
+2. click on a user - /users/15
+3. click on photos - /users/15/photos/
+4. the app works
+</code></pre></div>
+<p>Yet, visiting the same route directly <strong>would not work</strong>:</p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. visit /users/15/photos/ directly
+2. the app breaks
+</code></pre></div>
+<p>These types of failures where inconsistent and very confusing. In about
+50% of the cases, visiting a URL directly would work. The rest of the time, it
+would not.</p>
+
+<p>This was extremely frustrating, and lead to many confusing debugging
+sessions. And we now had <strong>two scenarios to test
+for every route in the app</strong>. 1) Visiting the route from within the app.
+2) visiting an ember route directly.</p>
+
+<blockquote>
+<p>I have never seen this issue with a normal rails app</p>
+</blockquote>
+
+<h2>3. Few libraries</h2>
+
+<p>Our app required pagination. At the time we wrote our Ember app, I found
+no Ember add-ons that could help us write pagination.</p>
+
+<p>The only thing I could find was a script that you could get you started
+with pagination in Ember. It didn&#39;t work with our version of Ember and
+it had to be extended in many ways just to create very basic pagination.
+Consequently, I had to spend a lot of time writing pagination code.
+That work was surprisingly time-consuming and really extended the project
+timeline.</p>
+
+<blockquote>
+<p>I felt that I was re-inventing the wheel, and poorly because I had a
+deadline to hit.</p>
+</blockquote>
+
+<h2>4. Few code examples / resources</h2>
+
+<p>This is not surprising given that Ember is a new framework. But, we
+lost a lot of time working with issues where there were no blog posts or
+stack overflow posts to be found. We were totally on our own
+to figure these issues out and quite often the solutions did not even
+make sense to us.</p>
+
+<h2>5. Slower development</h2>
+
+<p>Our development speed was about 1/3 of what it
+would have been with normal rails development. We
+spent most of our time trying to learn the framework or being really
+confused as to why our code was not working. After
+three months, I still didn&#39;t feel that I understood Ember.</p>
+
+<h2>6. Added layers and complexity</h2>
+
+<p>Rails developers and critics often talk about rails <em>magic</em>.
+Rails is powerful because it handles a lot of the complex and
+unglamorous work from you. Ember aims to do the same, but somehow falls short.</p>
+
+<p>Where Rails <em>magic</em> enables you to be very productive. Ember <em>magic</em>
+seemed to make us less productive. Topics as simple as <strong>how links work</strong>
+became things that we gave up trying to understand.</p>
+
+<p>Additionally, using Ember really increased the layers in our
+stack. Consider this diagram:</p>
+
+<p><img src="/img/ember-layers.png" alt="ember layers"></p>
+
+<p>All of that complexity increases development time, increases the learning curve,
+and increases confusion. It became harder for an individual to
+to develop a feature on their own.</p>
+
+<blockquote>
+<p>Layers and complexity - not things I seek when choosing
+my tools</p>
+</blockquote>
+
+<h2>7. It restricted our design</h2>
+
+<p>There were several instances where using Ember
+restricted our website&#39;s design. Had we been using rails and vanilla
+JavaScript, we could have implemented what we wanted. Instead, we had to
+make design compromises to fit our ideas into what was possible with the
+framework.</p>
+
+<blockquote>
+<p>Sticking with the raw materials - HTML, CSS, and JavaScript is
+much less limiting on your design than using a complex framework</p>
+</blockquote>
+
+<h2>8. JavaScript</h2>
+
+<p>Writing most of your app in JavaScript is simly not fun. JavaScript is known
+for being designed in <strong>10 days</strong>. Ruby is known for being designed for
+<strong>developer happiness</strong> - <em>which sounds better to you?</em></p>
+
+<h2>Conclusion</h2>
+
+<p>I wish I had known more about the problems I would face before diving into Ember.
+Had I known about them, I would not have chosen Ember.</p>
+
+<p>I think we&#39;ve all seen enough ToDo apps demonstrating how &quot;great&quot; these
+frameworks are.  It&#39;s time for people to start sharing their
+experiences using these frameworks to build real applications.</p>
+
+<p>If your priorities include shipping features quickly, developer
+happiness, maintainable code, and design flexibility, skip
+the hype and stick with tools that are proven to work.</p>
+
+<h2>Further Reading</h2>
+
+<ul>
+<li><a href="http://mir.aculo.us/2013/02/26/client-side-mvc-is-not-a-silver-bullet/">Client-side MVC is not a silver bullet</a></li>
+<li><a href="http://www.shopify.com/technology/15646068-rebuilding-the-shopify-admin-improving-developer-productivity-by-deleting-28-000-lines-of-javascript">Rebuilding the Shopify Admin: Improving Developer Productivity by Deleting 28,000 lines of JavaScript</a></li>
+</ul>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Rename a file without leaving Vim]]></title>
+    <link href="/blog/2014/11/05/rename-a-file-without-leaving-vim/"/>
+    <updated>2014-11-05T00:00:00-08:00</updated>
+    <id>/blog/2014/11/05/rename-a-file-without-leaving-vim</id>
+    <content type="html"><![CDATA[<p>Renaming files when you are coding can be a time consuming and annoying
+chore. You just want to get it over with quickly so that
+you can get back to your real work.</p>
+
+<p>This is how I used to do it:</p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. suspend vim to get to the terminal
+2. mv lib/old_file.txt lib/new_file.txt
+3. resume vim
+4. notice warning about file no longer existing
+5. open the new file
+</code></pre></div>
+<h2>A Faster Way</h2>
+
+<p>I found this handy vim function in Gary Bernhardt&#39;s
+<a href="https://github.com/garybernhardt/dotfiles/blob/master/.vimrc">.vimrc</a>:</p>
+<div class="highlight"><pre><code class="language-vim" data-lang="vim"><span class="k">function</span><span class="p">!</span> RenameFile<span class="p">()</span>
+    <span class="k">let</span> old_name <span class="p">=</span> <span class="nb">expand</span><span class="p">(</span><span class="s1">'%'</span><span class="p">)</span>
+    <span class="k">let</span> new_name <span class="p">=</span> <span class="nb">input</span><span class="p">(</span><span class="s1">'New file name: '</span><span class="p">,</span> <span class="nb">expand</span><span class="p">(</span><span class="s1">'%'</span><span class="p">),</span> <span class="s1">'file'</span><span class="p">)</span>
+    <span class="k">if</span> new_name <span class="p">!=</span> <span class="s1">''</span> &amp;&amp; new_name <span class="p">!=</span> old_name
+        exec <span class="s1">':saveas '</span> <span class="p">.</span> new_name
+        exec <span class="s1">':silent !rm '</span> <span class="p">.</span> old_name
+        <span class="k">redraw</span><span class="p">!</span>
+    <span class="k">endif</span>
+<span class="k">endfunction</span>
+<span class="nb">map</span> <span class="p">&lt;</span>leader<span class="p">&gt;</span><span class="k">r</span> <span class="p">:</span><span class="k">call</span> RenameFile<span class="p">()&lt;</span><span class="k">cr</span><span class="p">&gt;</span>
+</code></pre></div>
+<p>Once you have that in your <code>.vimrc</code>, renaming a file becomes much simpler.
+You <strong>don&#39;t even have to leave vim</strong>:</p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. &lt;leader&gt;r
+2. correct filename
+3. press enter
+</code></pre></div>
+<p>Congrats. You just sharpened your tools and saved yourself a few seconds per day.</p>
+
+<div class="newsletter-cta">
+  <p>
+    <b>
+      
+        Want more?
+      
+    </b>
+  </p>
+  <p>
+    
+      Sign up for my newsletter to hear about more tips like this!
+    
+  </p>
+  <!-- Begin MailChimp Signup Form -->
+  <div id="mc_embed_signup">
+    <form action="//aokolish.us9.list-manage.com/subscribe/post?u=fadcc7c47381f2394d5a3d05a&amp;id=b567f497d8" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+      <div id="mc_embed_signup_scroll">
+        <div class="field-wrap">
+          <input type="text" value="" name="FNAME" class="required" id="mce-FNAME" placeholder="Your first name">
+          <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Your email">
+          <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+          <div style="position: absolute; left: -5000px;"><input type="text" name="b_fadcc7c47381f2394d5a3d05a_b567f497d8" tabindex="-1" value=""></div>
+          <input type="submit" value="Sign me up!" name="subscribe" id="mc-embedded-subscribe" class="button">
+        </div>
+      </div>
+    </form>
+  </div>
+  <!--End mc_embed_signup-->
+</div>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[5 ways to start debugging your rails code]]></title>
+    <link href="/blog/2014/10/11/5-ways-to-start-debugging-your-rails-code/"/>
+    <updated>2014-10-11T00:00:00-07:00</updated>
+    <id>/blog/2014/10/11/5-ways-to-start-debugging-your-rails-code</id>
+    <content type="html"><![CDATA[<p>It can be really frustrating if you don&#39;t know how to debug your code.
+Maybe, you have an idea about what the problem is, but you don&#39;t know
+how to look into it.</p>
+
+<p>Instead of doing this:</p>
+
+<h1>(╯°□°）╯︵ ┻━┻</h1>
+
+<p>Use one of these techniques.</p>
+
+<h2>1. set a breakpoint</h2>
+
+<p>Let&#39;s say you have some code that looks like this:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">def</span> <span class="nf">create</span>
+  <span class="vi">@user</span> <span class="o">=</span> <span class="no">User</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">user_params</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="vi">@user</span><span class="p">.</span><span class="nf">save</span>
+    <span class="c1"># do something</span>
+  <span class="k">else</span>
+    <span class="c1"># do something else</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>And you think that <code>@user.save</code> is not saving the @user. My favorite way to
+look into this is to use <a href="http://pryrepl.org/">pry</a>. Install pry
+and insert a <code>binding.pry</code> into your code like so:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">def</span> <span class="nf">create</span>
+  <span class="vi">@user</span> <span class="o">=</span> <span class="no">User</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">user_params</span><span class="p">)</span>
+
+  <span class="nb">binding</span><span class="p">.</span><span class="nf">pry</span>
+  <span class="k">if</span> <span class="vi">@user</span><span class="p">.</span><span class="nf">save</span>
+  <span class="c1">#...</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>Submit the form or request again and execution will stop on that
+line. At that point, you can print useful stuff out. You might
+want to see what <code>@user.valid?</code> returns. Or, you could run <code>@user.save</code>
+to verify that it is returning <code>false</code>.</p>
+
+<p>Pry is the tool I reach for the most. Check it out if you are not
+already using it.</p>
+
+<h2>2. print stuff out</h2>
+
+<p>You can also figure out a lot of the same things by adding <code>puts</code>
+statements to your code.</p>
+
+<p>For example, instead of using pry in the example above. Put this into
+your code:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="nb">puts</span> <span class="s2">"user valid: </span><span class="si">#{</span><span class="vi">@user</span><span class="p">.</span><span class="nf">valid?</span><span class="si">}</span><span class="s2">"</span>
+<span class="vi">@user</span><span class="p">.</span><span class="nf">save</span>
+<span class="c1"># ...</span>
+</code></pre></div>
+<p>Then, go check your logs to see if your <code>@user</code> is valid.</p>
+
+<h2>3. read the exception output</h2>
+
+<p>This might sound crazy, but often times people do not read or
+think about exceptions.</p>
+<div class="highlight"><pre><code class="language-" data-lang="">`NoMethodError (undefined method 'first_name' for nil:NilClass)`
+
+Backtrace:
+app/views/users/show.html.erb:37
+# ...
+</code></pre></div>
+<p>Don&#39;t do this -  (ノಠ益ಠ)ノ彡┻━┻</p>
+
+<p>Instead, do this:</p>
+
+<ol>
+<li>think &quot;gee, something is nil that I didn&#39;t expect to be nil.&quot;</li>
+<li>open <code>app/views/users/show.html.erb</code> in your editor and go to
+line 37</li>
+<li>find out what is nil (<code>@user</code> or something similar)</li>
+<li>work backwords to figure out why that is happening</li>
+</ol>
+
+<h2>4. check network requests</h2>
+
+<p>Say, you have a feature that is using ajax and it is not working. You
+can use the network tab to see what is going on with the ajax request.</p>
+
+<p>Here is what that looks like in Google Chrome:</p>
+
+<p><img src="/img/network_tab.png" alt="network tab"></p>
+
+<p>You can get some good info just from the status code. If you see a 404,
+you might have a routes issue. If you see a 500, check the logs for an
+exception. If you see 422, try debugging your controller action.</p>
+
+<h2>5. check the logs for exceptions</h2>
+
+<p>This is a nice low-tech way to get feedback from your app. Try clearing
+your logs <code>rake log:clear</code>. Load the page or submit the form in
+question. Then, look at your development.log file. You might find that
+an exception occured in there.</p>
+
+<ol>
+<li>Clear your logs <code>rake log:clear</code>.</li>
+<li>Load the page or submit the form in question.</li>
+<li>Look through your development.log file.</li>
+</ol>
+
+<p>You might find an exception in there. This is also a useful technique
+for finding n+1 and other sql problems.</p>
+
+<div class="newsletter-cta">
+  <p>
+    <b>
+      
+        Want more?
+      
+    </b>
+  </p>
+  <p>
+    
+      Don't miss out on my next post!
+    
+  </p>
+  <!-- Begin MailChimp Signup Form -->
+  <div id="mc_embed_signup">
+    <form action="//aokolish.us9.list-manage.com/subscribe/post?u=fadcc7c47381f2394d5a3d05a&amp;id=b567f497d8" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+      <div id="mc_embed_signup_scroll">
+        <div class="field-wrap">
+          <input type="text" value="" name="FNAME" class="required" id="mce-FNAME" placeholder="Your first name">
+          <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Your email">
+          <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+          <div style="position: absolute; left: -5000px;"><input type="text" name="b_fadcc7c47381f2394d5a3d05a_b567f497d8" tabindex="-1" value=""></div>
+          <input type="submit" value="Sign me up!" name="subscribe" id="mc-embedded-subscribe" class="button">
+        </div>
+      </div>
+    </form>
+  </div>
+  <!--End mc_embed_signup-->
+</div>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[How to Get Started With Rails]]></title>
+    <link href="/blog/2014/10/04/how-to-get-started-with-rails/"/>
+    <updated>2014-10-04T00:00:00-07:00</updated>
+    <id>/blog/2014/10/04/how-to-get-started-with-rails</id>
+    <content type="html"><![CDATA[<p>I recently read this <a href="https://railsforum.com/topic/1156-getting-started-with-rails/">question on a
+forum</a>
+ paraphrased as:</p>
+
+<blockquote>
+<p>I am very new to programming. Should I learn HTML, CSS, or
+  Ruby before I learn rails?</p>
+</blockquote>
+
+<p>Yes, you should.</p>
+
+<h2>Learn the basics</h2>
+
+<p>All websites are built using HTML, CSS, and Javascript - you need to know these.
+If you can look at sketch of a UI and code it up, you know enough
+about HTML and CSS. If not, start there.</p>
+
+<p>I also suggest you learn the basics of programming in ruby.  There are some great
+online resources for learning this. Rails is going to make a lot more sense once
+you know some ruby.</p>
+
+<h2>Break Problems Down</h2>
+
+<p>Breaking big problems down into smaller chunks is a good way to speed up
+your learning. To
+build somethng with rails, you need to know Ruby, Rails, HTML, CSS,
+Javascript, SQL, deployment and more. How well do you think you can learn
+all of those simultaneously? Not very well.</p>
+
+<p>You do not need to be an expert at all of these languages, but you do
+need a foundation in each.</p>
+
+<h2>Have fun</h2>
+
+<p>Learning how to program is hard work. Build something fun as you learn
+to make it fun and stay motivated.</p>
+
+<p>I was really into cooking when I first started learning rails. After I
+finished a book on rails, I built a site for saving and sharing
+recipes. That made learning rails much more fun and relevant to me.</p>
+
+<h2>Shortcuts</h2>
+
+<p>They don&#39;t exist.</p>
+
+<p>A website mentioned on this post implies that after completing their
+<strong>one month rails course</strong> you can land a $120,000
+programming job. I can assure you that is bullshit.</p>
+
+<p><img src="/img/smells_like_bullshit.jpg" alt="smells like bullshit"></p>
+
+<p>It takes time and effort to master this stuff. I have been learning to
+program for 6 years and still have plenty to learn. You do not need a
+computer science degree, but you do need to be persistant and put in the work.</p>
+
+<div class="newsletter-cta">
+  <p>
+    <b>
+      
+        Want more?
+      
+    </b>
+  </p>
+  <p>
+    
+      Don't miss out on my next post!
+    
+  </p>
+  <!-- Begin MailChimp Signup Form -->
+  <div id="mc_embed_signup">
+    <form action="//aokolish.us9.list-manage.com/subscribe/post?u=fadcc7c47381f2394d5a3d05a&amp;id=b567f497d8" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+      <div id="mc_embed_signup_scroll">
+        <div class="field-wrap">
+          <input type="text" value="" name="FNAME" class="required" id="mce-FNAME" placeholder="Your first name">
+          <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Your email">
+          <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+          <div style="position: absolute; left: -5000px;"><input type="text" name="b_fadcc7c47381f2394d5a3d05a_b567f497d8" tabindex="-1" value=""></div>
+          <input type="submit" value="Sign me up!" name="subscribe" id="mc-embedded-subscribe" class="button">
+        </div>
+      </div>
+    </form>
+  </div>
+  <!--End mc_embed_signup-->
+</div>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[A Better Technical Interview]]></title>
+    <link href="/blog/2013/07/23/a-better-technical-interview/"/>
+    <updated>2013-07-23T00:00:00-07:00</updated>
+    <id>/blog/2013/07/23/a-better-technical-interview</id>
+    <content type="html"><![CDATA[<p><img src="/img/imagine_interviews_relevant.jpg" alt="imagine a world...where interviews are relevant"></p>
+
+<p>Eight months ago, I was asked my first whiteboarding question during an
+interview. I had to write a ruby method that used an algorithm I
+had never heard of to validate a number. I was very nervous and
+failed miserably.</p>
+
+<p>Whiteboarding, API quizzes, and riddles are very common interviewing
+techniques these days. I think this is a poor approach to interviewing
+and will outline suggestions for more effective interview techniques.</p>
+
+<h2>Interview Goals</h2>
+
+<p>I think a good interview should at least answer the following
+questions about a candidate:</p>
+
+<ol>
+<li>Can they program well?</li>
+<li>Can they learn new things when they need to?</li>
+<li>Are they a good cultural/personality fit?</li>
+</ol>
+
+<h2>Current Approach</h2>
+
+<p>The following techniques are commonly used today:</p>
+
+<ul>
+<li>writing code on a whiteboard</li>
+<li>puzzle and riddle questions</li>
+<li>reading your resume</li>
+<li>framework and language memorization questions</li>
+<li>programming language design questions</li>
+</ul>
+
+<h3>Writing Code On A Whiteboard</h3>
+
+<p>Anyone who spends their time trying to write production-quality code
+without testing or executing it is <strong>wasting their time</strong>. Of course,
+whiteboarding is useful for brainstorming and sketching out ideas.
+Being able to produce bug-free code at the whiteboard is
+certainly not a requirement for a programming job though.</p>
+
+<h3>Puzzles And Riddles</h3>
+
+<p>Again, this will never come up in real work. After
+several years of programming on the job, I have yet to need to solve a riddle
+at work. These questions are <strong>completely irrelevant</strong>.</p>
+
+<h3>Reading Your Resume</h3>
+
+<p>Resumes are often full of fabrications and half-truths. Consequently, there is
+little value in analyzing them.  Anyone who thinks their hiring
+decision should primarily be based on a resume should consider this question
+by Rob Mee:</p>
+
+<blockquote>
+<p>Would you hire an actor without an audition?</p>
+</blockquote>
+
+<p>Actors are hired to act. Programmers are hired to program. Your resume
+does not prove that you can program.</p>
+
+<h3>Framework And Language Memorization Questions</h3>
+
+<p>Interviewers often want to see that you have framework and language details memorized.
+Yet, framework and language details change frequently. Is it that
+valuable to memorize the details of ActiveRecord if
+its APIs and best practices change every 3-6 months?</p>
+
+<p>I would rather see that a candidate can:</p>
+
+<ol>
+<li>know where to find docs and answers to questions as they come up</li>
+<li>keep up to date on best practices (read blogs, listen to podcasts,
+etc.)</li>
+<li>be able to find and read the source code of a library they are using.</li>
+</ol>
+
+<p>So Again, I do not think these questions are relevant.</p>
+
+<h3>Programming Language Design Questions</h3>
+
+<p>Topics such as Tail Call Optimization, Closures and other language
+design details do not come up often when writing web apps.
+Especially, early on in an app.  Why ask these questions if they
+aren&#39;t relevant to the work?</p>
+
+<h2>What Should We Do?</h2>
+
+<p>Clearly, these current interview practices are imperfect.
+Let&#39;s review the questions we want to answer when interviewing a
+programmer:</p>
+
+<ol>
+<li>Can they program well?</li>
+<li>Can they learn new things when they need to?</li>
+<li>Are they a good cultural/personality fit?</li>
+</ol>
+
+<p>I think there is an easy way that we can get to the point and answers these
+questions.</p>
+
+<h3>Pair Programming</h3>
+
+<p>As the name suggests, pair programming involves programming. So,
+we are off to a good start here already. You can quickly get a
+feel for someone&#39;s coding ability when you pair with them. So, that
+takes care of question #1.</p>
+
+<p>Question #2 is a bit more abstract. For this, I would be looking to see
+how the candidate reacts when their code is not working. Or, when they
+need to work on something they are unfamiliar with.</p>
+
+<p>A third benefit of pairing is that it gives you insight into the person&#39;s
+personality.</p>
+
+<h3>Supporting Ideas</h3>
+
+<p>I think pairing works even better when supported by a few additional things:</p>
+
+<ul>
+<li>ask to see their side projects and/or open source projects</li>
+<li>ask behavioral questions (i.e. tell me about a time you worked through
+a team conflict)</li>
+<li>if possible, give them access to some of your code repos and campfire</li>
+<li>have them work on a small project for a day or two</li>
+</ul>
+
+<h3>Benefits:</h3>
+
+<p>One of the things that I like best about pairing to interview is
+that candidate gets to learn about you. In a traditional interview,
+it can be tricky to determine the interviewer&#39;s skill level when all they
+are doing is asking you how to code up a Fibonacci method or implement a
+stack. With pairing, they can get a feel for your skill by interacting
+with you.</p>
+
+<p>With this approach, both parties leave the interview better informed. I
+think this is great as it should serve to minimize post-hiring surprises
+on the job.</p>
+
+<p>Ultimately, this approach forces the interviewer to use their
+best judgment to make the hiring call more than they would have to in a
+traditional interview. It is no longer about the candidate getting x of n
+questions correct. It is less clear than that, but more relevant.</p>
+
+<h2>Further Reading</h2>
+
+<ul>
+<li><a href="http://37signals.com/svn/posts/3071-why-we-dont-hire-programmers-based-on-puzzles-api-quizzes-math-riddles-or-other-parlor-tricks">37signals - programming puzzles</a></li>
+<li><a href="http://37signals.com/svn/posts/3543-google-uses-big-data-to-prove-hiring-puzzles-useless-and-gpas-meaningless">37signals - Google&#39;s hiring puzzle data</a></li>
+<li><a href="http://www.nytimes.com/2013/06/20/business/in-head-hunting-big-data-may-not-be-such-a-big-deal.html?pagewanted=all">Google - Big Data May Not Be Such a Big Deal</a></li>
+</ul>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Finding a Programming Job]]></title>
+    <link href="/blog/2013/05/11/finding-a-job/"/>
+    <updated>2013-05-11T00:00:00-07:00</updated>
+    <id>/blog/2013/05/11/finding-a-job</id>
+    <content type="html"><![CDATA[<p>Interviewing can be frustrating.</p>
+
+<p>I recently went through a round of interviews
+in San Francisco. I had to interview with <strong>twenty companies</strong> to find
+the right job and was rejected from many places. One of the things that
+I learned from the experience is that interviewing is completely different
+from normal work. Being a good programmer does not mean that
+you will interview well.</p>
+
+<p>The good news is that I think you can improve your interviewing
+substantially by working on a few key things. I like to think of
+interviewing as a series of hurdles. I think the key to success is to
+focus on the hurdle that you are not getting past.</p>
+
+<h2>Rejection</h2>
+
+<p>I was rejected from thirteen companies during this last job search.
+Here is the breakdown of the reasons that I was rejected:</p>
+
+<ul>
+<li>5 - they wanted someone with more experience</li>
+<li>4 - failed coding challenges</li>
+<li>4 - other reasons (they were not actually hiring a programmer, not a
+cultural fit, never heard back, etc.)</li>
+</ul>
+
+<p>The top two reasons are the ones that concern me - not enough
+experience and coding challenges. They happened many times. I think
+many of them could have been avoided.</p>
+
+<h2>Hurdles</h2>
+
+<p>If interviewing is like a series of hurdles, each hurdle is
+designed to weed out people who are not qualified. From the breakdown
+above, we can see that there were two things that consistently put me
+out of the running for jobs: 1) coding challenges 2) lack of experience.</p>
+
+<p>You cannot get a job if you cannot get past the coding
+challenges at these places. If you focus on looking more
+experienced without being able to code up a fibonacci method, you
+are going to have a really hard time finding a job. To
+maximize your chances, you have to focus on the first hurdle that&#39;s
+tripping you up. In my case, it was coding challenges; I should have
+taken them more seriously.</p>
+
+<h3>Common Coding Challenges</h3>
+
+<p>The following questions came up over and over again.
+Memorizing solutions to these problems was extremely helpful for me.</p>
+
+<ul>
+<li>fibonacci sequence (iterative and recursive)</li>
+<li>implement a stack/queue</li>
+<li>string manipulation (reverse, sort, etc.)</li>
+<li>talk about the big O of your code</li>
+</ul>
+
+<p>Once I became comfortable with these, interviews started going much
+smoother.</p>
+
+<h2>Experience</h2>
+
+<p>The second hurdle I struggled with was experience. In several cases, I did
+very well at the coding challenges. Then, was told that I simply did not
+have enough years on my resume. Naturally, that is frustrating to hear
+because I cannot change time. I refused to accept that I had to
+take a crappy job just because I hadn&#39;t been working X number of
+years.</p>
+
+<h3>What Can You Do About the Experience Hurdle?</h3>
+
+<p>Clearly, some people are more motivated to learn than others. I think
+your goal here should be to point out anything you do outside of work
+that contributes to your experience. By pointing out how motivated you
+are, you can mitigate them focusing on the number of years you&#39;ve been
+at it.</p>
+
+<p>Working on and talking about the following can help:</p>
+
+<ul>
+<li>open source contributions</li>
+<li>side projects</li>
+<li>clubs/meetups that you attend</li>
+<li>programmers you follow/look up to</li>
+<li>books you&#39;ve read</li>
+</ul>
+
+<h2>What Else?</h2>
+
+<p>I also found the following to help me:</p>
+
+<ul>
+<li>be prepared for non-technical questions (i.e. why do you want to work
+here?)</li>
+<li>dress up slightly more than the people interviewing you (don&#39;t
+get crazy though)</li>
+<li>be positive</li>
+<li>smile (seriously)</li>
+</ul>
+
+<h3>Networking</h3>
+
+<p>As always, networking is <strong>extremely</strong> helpful. I found interviews
+setup through a connection to typically be more interesting.
+The job that I ultimately accepted was at a place where a friend of mine
+works.</p>
+
+<h2>Conclusion</h2>
+
+<p>I hope these tips help you with your next job search. Good luck
+getting past your hurdles!</p>
+
+<h2>Other Resources</h2>
+
+<ul>
+<li><a href="http://www.amazon.com/Cracking-Coding-Interview-Programming-Questions/dp/098478280X/">cracking the coding
+interview</a></li>
+<li>friends - ask them to quiz and mock interview you</li>
+</ul>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Using Tmux and Tmuxinator]]></title>
+    <link href="/blog/2013/02/12/using-tmux-and-tmuxinator/"/>
+    <updated>2013-02-12T08:20:00-08:00</updated>
+    <id>/blog/2013/02/12/using-tmux-and-tmuxinator</id>
+    <content type="html"><![CDATA[<p>I have been using tmux for the past few months and it has become one of
+my favorite programming tools. I love the window management for keeping
+my work organized and as automated as possible.</p>
+
+<p>Tmux is referred to as a terminal multiplexer and is similar to GNU Screen.
+Basically, a terminal multiplexer enables you to run multiple terminal sessions
+within one window.</p>
+
+<p>This is what a simple session with two windows looks like for me:
+<img src="/img/ex-tmux.png" alt="tmux example"></p>
+
+<h2>Why Use Tmux?</h2>
+
+<p>One reason I really like tmux is because it helps you keep your
+terminals very organized.  I use iTerm2 and work on web apps during the
+day. Typically, I need to run two apps at the same time - a client and a
+server. I also use command line vim for text editing. So, that means
+without tmux, I need a minimum of four terminal tabs in order to work
+on these two projects at the same time. That&#39;s already a lot of tabs to
+keep track of.</p>
+
+<p>Without tmux, I spend a lot of time looking for things. I end up looking
+for things rather than just knowing where they are. My four tabs quickly
+balloon to seven tabs as I started up rails consoles, ssh to servers, edit
+my dotfiles and so forth. Then, I have to tab through them constantly to
+find what I am looking for.</p>
+
+<p>When I use tmux, each project is contained in
+a tmux session and everything ends up being much easier to find. I
+always have vim in the first window and my server running in the second
+window. Then, I can add windows and splits as needed. I spend less time
+looking for things and can keep focused on more interesting problems.</p>
+
+<h2>Tmuxinator</h2>
+
+<p>Tmuxinator makes tmux even more awesome because it allows you to
+set up configurable sessions. For example, a minimal tmux session for me
+involves two windows - one for vim and another for running my rails
+server (pictured above). Without tmuxinator, it&#39;s about a four step process
+to get that set up to start work on a project that has to be repeated
+every time. With tmuxinator, it&#39;s a one liner - I run <code>mux blog</code>
+to start all of that instantly.</p>
+
+<h2>Getting Started With Tmuxinator</h2>
+
+<p>This is all it takes to get started (see the tmuxinator
+<a href="https://github.com/aziz/tmuxinator">readme</a> for the latest instructions):</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>gem <span class="nb">install </span>tmuxinator
+<span class="nv">$ </span>mux new some_project     <span class="c"># I like the 'mux' alias</span>
+<span class="nv">$ </span>mux open some_project    <span class="c"># to open the config in $EDITOR</span>
+</code></pre></div>
+<p>Edit the config as needed:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="c1"># ~/.tmuxinator/some_project.yml</span>
+
+<span class="ss">project_name: </span><span class="n">some_project</span>
+<span class="ss">project_root: </span><span class="o">~</span><span class="sr">/code/some</span><span class="n">_project</span>
+<span class="ss">tabs:
+  </span><span class="o">-</span> <span class="ss">vim: </span><span class="n">vim</span>
+  <span class="o">-</span> <span class="ss">preview: </span><span class="n">bundle</span> <span class="nb">exec</span> <span class="n">rake</span> <span class="n">preview</span>
+</code></pre></div>
+<p>Start the tmux session:
+<code>bash
+$ mux some_project
+</code></p>
+
+<h2>Other Cool Features of Tmux</h2>
+
+<p>Tmux has a plethora of features I don&#39;t have time to go into. Here are
+some of my favorites:</p>
+
+<ul>
+<li>low-bandwidth pair programming</li>
+<li>easily detach and attach to different sessions</li>
+<li>alerts to changes in other windows</li>
+<li>vim-like key bindings - keep your fingers on home row</li>
+</ul>
+
+<h2>Further Reading</h2>
+
+<ul>
+<li><a href="http://robots.thoughtbot.com/post/2641409235/a-tmux-crash-course">tmux crash course</a> from thoughtbot</li>
+<li><a href="http://pragprog.com/book/bhtmux/tmux">tmux: producive mouse-free development</a> - excellent intro
+to tmux</li>
+<li><a href="https://github.com/aziz/tmuxinator">tmuxinator</a> on github</li>
+<li><a href="https://github.com/zolrath/wemux">wemux</a> - pairing with tmux</li>
+<li><a href="http://www.youtube.com/watch?v=QxTse5Elq8s">tmux vs. screen</a>
+(youtube video)</li>
+</ul>
+
+<h2>Related Posts</h2>
+
+<ul>
+<li><a href="/blog/2015/02/16/how-to-start-your-app-in-tmux-with-one-command/">Start Your Project in Tmux With One Command</a></li>
+</ul>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Running Spinach Features with Zeus]]></title>
+    <link href="/blog/2013/02/10/running-spinach-features-with-zeus/"/>
+    <updated>2013-02-10T16:13:00-08:00</updated>
+    <id>/blog/2013/02/10/running-spinach-features-with-zeus</id>
+    <content type="html"><![CDATA[<p>If you haven&#39;t tried <a href="https://github.com/burke/zeus">zeus</a> yet,
+you are missing out on some free speed.  It is similar to spork
+but aims to be language agnostic. The main thing I find exciting
+about it is that it can be used to do things other than
+run tests such as loading consoles and running generators.</p>
+
+<p>I like to write my integration tests with <a href="https://github.com/codegram/spinach">spinach</a>,
+and this does not work out of the box with zeus.
+This post outlines how to get them
+working together - it&#39;s pretty simple.</p>
+
+<!-- more -->
+
+<h2>What You Have to Do</h2>
+
+<p>Run <code>zeus init</code> to generates two zeus config files -
+custom_plan.rb and zeus.json.</p>
+
+<p>Fill in custom_plan.rb with the following code:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="nb">require</span> <span class="s1">'zeus/rails'</span>
+
+<span class="k">class</span> <span class="nc">CustomPlan</span> <span class="o">&lt;</span> <span class="no">Zeus</span><span class="o">::</span><span class="no">Rails</span>
+
+  <span class="k">def</span> <span class="nf">spinach_environment</span>
+    <span class="nb">require</span> <span class="s1">'spinach'</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">spinach</span>
+    <span class="n">spinach_main</span> <span class="o">=</span> <span class="no">Spinach</span><span class="o">::</span><span class="no">Cli</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="no">ARGV</span><span class="p">.</span><span class="nf">dup</span><span class="p">)</span>
+    <span class="nb">exit</span> <span class="n">spinach_main</span><span class="p">.</span><span class="nf">run</span>
+  <span class="k">end</span>
+
+<span class="k">end</span>
+
+<span class="no">Zeus</span><span class="p">.</span><span class="nf">plan</span> <span class="o">=</span> <span class="no">CustomPlan</span><span class="p">.</span><span class="nf">new</span>
+</code></pre></div>
+<p>Replace cucumber with spinach in zeus.json so that zeus knows what to
+run on startup:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="p">{</span>
+  <span class="s2">"command"</span><span class="p">:</span> <span class="s2">"ruby -rubygems -r./custom_plan -eZeus.go"</span><span class="p">,</span>
+
+  <span class="s2">"plan"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">"boot"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">"default_bundle"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"development_environment"</span><span class="p">:</span> <span class="p">{</span>
+          <span class="s2">"prerake"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"rake"</span><span class="p">:</span> <span class="p">[]},</span>
+          <span class="s2">"runner"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"r"</span><span class="p">],</span>
+          <span class="s2">"console"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"c"</span><span class="p">],</span>
+          <span class="s2">"server"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"s"</span><span class="p">],</span>
+          <span class="s2">"generate"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"g"</span><span class="p">],</span>
+          <span class="s2">"destroy"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"d"</span><span class="p">],</span>
+          <span class="s2">"dbconsole"</span><span class="p">:</span> <span class="p">[]</span>
+        <span class="p">},</span>
+        <span class="s2">"test_environment"</span><span class="p">:</span> <span class="p">{</span>
+          <span class="s2">"spinach_environment"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"spinach"</span><span class="p">:</span> <span class="p">[]},</span>
+          <span class="s2">"test_helper"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"test"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"rspec"</span><span class="p">,</span> <span class="s2">"testrb"</span><span class="p">]}</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+</code></pre></div>
+<h2>Dependencies Used</h2>
+
+<p>Both spinach and zeus are fairly new so this solution may not work with
+future versions of them. This works with:</p>
+
+<ul>
+<li>zeus version 0.13.2</li>
+<li>spinach 0.7.0</li>
+<li>spinach-rails 0.1.8 (for a rails app)</li>
+</ul>
+
+<h2>Useful Resources:</h2>
+
+<ul>
+<li>The <a href="https://github.com/burke/zeus">zeus</a> repo on github</li>
+<li><a href="https://github.com/codegram/spinach">spinach</a> on github</li>
+</ul>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Ctags in Vim]]></title>
+    <link href="/blog/2012/10/15/ctags-in-vim/"/>
+    <updated>2012-10-15T21:52:00-07:00</updated>
+    <id>/blog/2012/10/15/ctags-in-vim</id>
+    <content type="html"><![CDATA[<p>Ctags help you navigate large or unfamiliar code bases.  For example, they
+help you quickly jump to method definitions. Prior to using ctags,
+I would do the following:</p>
+
+<ol>
+<li>look at the method being called e.g. &#39;some<em>object.some</em>method&#39;</li>
+<li>do a project-wide search for &#39;some_method&#39; to determine which file to open</li>
+<li>open that file</li>
+<li>if the file is large, search for the method again</li>
+</ol>
+
+<p>I learned to do this relatively quickly and really got used to it. Ctags
+make this look ridiculous.</p>
+
+<p>With ctags, I simply put my cursor on the method and
+press <code>tt</code>(custom vim binding) and that immediately opens
+up the correct file on the correct line.</p>
+
+<p>This post covers how to get started with ctags and how to customize them
+a bit. Note: I&#39;m going to focus on how to use ctags on a mac with vim.
+Other operating systems and editors should require similar steps.</p>
+
+<h2>Basics</h2>
+
+<p>If you have <a href="http://mxcl.github.com/homebrew/">homebrew</a>, installation is simple:</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">brew <span class="nb">install </span>ctags
+</code></pre></div>
+<p>In your console, navigate to a project and run this:</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">ctags <span class="nt">-R</span> <span class="nt">--exclude</span><span class="o">=</span>.git
+</code></pre></div>
+<p>That should create a tags file in the root of the project. Now, find a method call
+within the project and press <code>Ctrl+]</code> to jump to the first matching
+tag. Then, press <code>Ctrl+t</code> to go back.</p>
+
+<p>If there are multiple matching tags you can go through them with <code>:tnext</code>
+and <code>:tprevious</code>.</p>
+
+<h2>Advanced Usage</h2>
+
+<p>These are some optimizations that make working with ctags much
+more streamlined for me.</p>
+
+<h3>Customize Vim</h3>
+
+<p>I find the default ctag commands a bit cumbersome to type so I use the
+following mappings in my .vimrc (including a mapping to regenerate the
+ctags when needed):</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="c"># manually, regenerate ctags</span>
+map &lt;Leader&gt;rt :!ctags <span class="nt">--extra</span><span class="o">=</span>+f <span class="nt">-R</span> <span class="k">*</span>&lt;CR&gt;&lt;CR&gt;
+
+<span class="c"># main mapping, go to first matching tag</span>
+map tt &lt;c-]&gt;
+
+<span class="c"># move forward and back through matching tags</span>
+map &lt;c-b&gt; :tprevious&lt;CR&gt;
+map &lt;c-n&gt; :tnext&lt;CR&gt;
+</code></pre></div>
+<h3>Automatically Generate Ctags with Git Hooks</h3>
+
+<p>Another thing you might want to avoid is having to manually update your
+ctags when the code changes over time.</p>
+
+<p>Fortunately, there is a way to automate the generation of ctags with git
+hooks and Tim Pope outlines it <a href="http://tbaggery.com/2011/08/08/effortless-ctags-with-git.html">in this blog post</a>.
+The gist of it is that you setup git hooks to automatically regenerate
+ctags in a background process after you do stuff like a <code>git pull,
+merge, commit, or rebase</code>.</p>
+
+<h2>Further Reading</h2>
+
+<ul>
+<li><code>:help tags</code> in vim</li>
+<li><code>man ctags</code></li>
+<li><a href="http://heim.no/VIM/2012/04/19/generate-ctags-for-all-bundled-gems-in-a-ruby-project/">generating ctags for gems in a project</a></li>
+<li><a href="http://ctags.sourceforge.net/index.html">http://ctags.sourceforge.net/index.html</a></li>
+</ul>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Toggle Hidden Files on Mac OSX]]></title>
+    <link href="/blog/2012/03/01/toggle-hidden-files-on-mac-osx/"/>
+    <updated>2012-03-01T19:33:00-08:00</updated>
+    <id>/blog/2012/03/01/toggle-hidden-files-on-mac-osx</id>
+    <content type="html"><![CDATA[<p>When I started doing development work on the Mac, I found it odd
+that there was no easy way to toggle the visibility of hidden files.
+Windows has had a way to do this through the GUI for years. Typically,
+if you want to see hidden files on the Mac, you run something
+like this on the command line:</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">defaults write com.apple.finder AppleShowAllFiles <span class="nt">-boolean</span> TRUE
+killall Finder
+</code></pre></div>
+<p>And to hide them again you would run:</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">defaults write com.apple.finder AppleShowAllFiles <span class="nt">-boolean</span> FALSE
+killall Finder
+</code></pre></div>
+<p>If you find yourself wanting to see hidden files in the Finder, you may not have the
+terminal running. Plus, when I need to see hidden files,
+switching to the terminal to do this can be a disrupting
+change of context.</p>
+
+<p>With that in mind, let&#39;s come up with a way to toggle these two states
+while you are using the finder. I think it would be pretty slick if you
+could right-click while using the finder and select something like
+&#39;Toggle Hidden&#39; to pull this off. Automator, which comes with Mac OS X,
+makes this really simple.</p>
+
+<p>Open Automator and create a new Service. At the top of the workflow,
+change the drop downs such that they read &#39;Service receives selected
+files or folders in Finder ...&#39;. Find &#39;Run Shell Script&#39; and
+drag that on to your workflow. Paste the following code (courtesy of
+<a href="http://www.linkedin.com/pub/mack-corl/5/1a7/5b6">Mack Corl</a> ) into that
+script:</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">state</span><span class="o">=</span><span class="sb">`</span>defaults <span class="nb">read </span>com.apple.finder AppleShowAllFiles<span class="sb">`</span><span class="p">;</span>
+<span class="nv">newstate</span><span class="o">=</span><span class="s1">'TRUE'</span><span class="p">;</span>
+<span class="k">if</span> <span class="o">[</span> <span class="nv">$state</span> <span class="nt">-eq</span> 1 <span class="o">]</span><span class="p">;</span>
+<span class="k">then
+    </span><span class="nv">newstate</span><span class="o">=</span><span class="s1">'FALSE'</span><span class="p">;</span>
+<span class="k">fi</span>
+<span class="sb">`</span>defaults write com.apple.finder AppleShowAllFiles <span class="nt">-boolean</span> <span class="nv">$newstate</span><span class="p">;</span> killall Finder<span class="sb">`</span>
+</code></pre></div>
+<p>This code simply determines whether or not hidden files are visible
+and then sets them to the opposite state. Unfortunately, it also has to
+kill all of the finder windows in order for them to reflect that change (it can be a
+bit jarring/unexpected). Save this Service and give it a name such as
+&#39;Toggle Hidden&#39; Now, open the finder and right-click a file or folder -
+you should see your service in the context-menu and be able to test it
+out.</p>
+
+<p>Caveat: you must click on a file or folder in order for this service to show up in
+the context menu. What do you think? Useful?</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Testing Hover Events with Capybara]]></title>
+    <link href="/blog/2012/01/22/testing-hover-events-with-capybara/"/>
+    <updated>2012-01-22T22:06:00-08:00</updated>
+    <id>/blog/2012/01/22/testing-hover-events-with-capybara</id>
+    <content type="html"><![CDATA[<p>Recently, I needed to write an integration test that involved hovering
+on elements. It was a bit painful to figure out, but the solution is simple.
+There are three things you need to know:</p>
+
+<ol>
+<li>You need to use capybara-webkit as you javascript driver</li>
+<li>You have to trigger the &#39;mouseover&#39; event</li>
+<li>This solution isn&#39;t well documented</li>
+</ol>
+
+<p>When I started trying to figure out how to hover on elements in my
+tests, I only found one working solution and it involved triggering
+events via jQuery like this:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">page</span><span class="p">.</span><span class="nf">execute_script</span><span class="p">(</span><span class="s1">'$("#element").trigger("mouseenter")'</span><span class="p">)</span>
+</code></pre></div>
+<p>I was happy that it worked, but having to use to use jQuery in the
+middle of a spec felt like a hack. It turns out, the solution is pretty simple.</p>
+
+<p>First, you need to use <a href="https://github.com/thoughtbot/capybara-webkit">capybara-webkit</a>
+in order to go with this solution. 
+Add it to your Gemfile with <code>gem &quot;capybara-webkit&quot;</code> and run <code>bundle</code> 
+to install the gem. Then, you need to add a line to your spec_helper file to tell 
+rspec to use that driver for your tests involving js (default is
+selenium):</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="no">RSpec</span><span class="p">.</span><span class="nf">configure</span> <span class="k">do</span> <span class="o">|</span><span class="n">config</span><span class="o">|</span>
+  <span class="c1"># ...</span>
+  <span class="no">Capybara</span><span class="p">.</span><span class="nf">javascript_driver</span> <span class="o">=</span> <span class="ss">:webkit</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>Once you are using capybara-webkit, you can trigger events on elements
+such as a mouseover event:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">page</span><span class="p">.</span><span class="nf">find</span><span class="p">(</span><span class="s1">'#element'</span><span class="p">).</span><span class="nf">trigger</span><span class="p">(</span><span class="ss">:mouseover</span><span class="p">)</span>
+</code></pre></div>
+<p>This code looks so similar to the jQuery-based solution that I was
+surprised that I did not figure this out quicker. What tripped me
+up though was the specific event that I was triggering.
+Initially, I was triggering the mouseenter event. When you do that, you
+get no errors but it doesn&#39;t seem to do anything. I did some
+experimenting and it seems that no errors are raised when you trigger an
+unsupported event (such as a made up one). Anyhow, hovering on elements
+turns out to be pretty simple.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[@font-face with the Asset Pipeline]]></title>
+    <link href="/blog/2011/12/24/at-font-face-with-the-asset-pipeline/"/>
+    <updated>2011-12-24T15:56:00-08:00</updated>
+    <id>/blog/2011/12/24/at-font-face-with-the-asset-pipeline</id>
+    <content type="html"><![CDATA[<h2>TL;DR</h2>
+
+<p>If you are new to the asset pipeline in rails, using custom fonts can be
+a bit confusing. This is how I recommend getting started:</p>
+
+<ol>
+<li>add fonts in app/assets/fonts/</li>
+<li>add the fonts folder to the asset path</li>
+<li>use the sass-rails helpers to reference the font files</li>
+<li>use the fontspring @font-face syntax</li>
+</ol>
+
+<h2>Getting Started</h2>
+
+<p>To get started, you need a custom font to use in your rails app.
+Personally, I was starting out with an icon font - <a href="http://medialoot.com/item/signify-free-icon-font/">Signify-lite</a>. If you plan to support all devices, you will need four different font files: </p>
+
+<ol>
+<li>embedded open type (.eot)</li>
+<li>woff (.woff)</li>
+<li>truetype (.ttf)</li>
+<li>scalable vector graphics (.svg)</li>
+</ol>
+
+<p>If you are missing one or more of these, fontsquirrel.com has a <a href="http://www.fontsquirrel.com/fontface/generator">free generator</a> that can create the other font files based off of the file that are starting out with.</p>
+
+<h2>Add the Fonts Folder to the Asset Path</h2>
+
+<p>You can certainly put your fonts wherever you like, but a &#39;fonts&#39; folder
+right under app/assets makes the most sense to me. With the asset
+pipeline, you have to do a bit of work if you want to do that; you
+have to add that folder to the &#39;asset path&#39;. In this case, you just add
+this to your config/application.rb:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="c1"># add app/assets/fonts to the asset path</span>
+<span class="n">config</span><span class="p">.</span><span class="nf">assets</span><span class="p">.</span><span class="nf">paths</span> <span class="o">&lt;&lt;</span> <span class="no">Rails</span><span class="p">.</span><span class="nf">root</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="s2">"app"</span><span class="p">,</span> <span class="s2">"assets"</span><span class="p">,</span> <span class="s2">"fonts"</span><span class="p">)</span>
+</code></pre></div>
+<p>Restart your server, and that will take effect.</p>
+
+<h2>@font-face declaration</h2>
+
+<p>The best cross-browser font-face syntax appears to be the <a href="http://www.fontspring.com/blog/the-new-bulletproof-font-face-syntax">font spring</a> syntax:</p>
+<div class="highlight"><pre><code class="language-" data-lang="">@font-face {
+    font-family: 'MyFontFamily';
+    src: url('myfont-webfont.eot?#iefix') format('embedded-opentype'), 
+         url('myfont-webfont.woff') format('woff'), 
+         url('myfont-webfont.ttf')  format('truetype'),
+         url('myfont-webfont.svg#svgFontName') format('svg');
+}
+</code></pre></div>
+<p>If you are already familiar with the asset pipeline, you know
+that you cannot reference your font like this:</p>
+<div class="highlight"><pre><code class="language-css" data-lang="css"><span class="o">...</span> <span class="nt">url</span><span class="o">(</span><span class="s2">'/assets/fonts/myfont-webfont.ttf'</span><span class="o">)</span>
+</code></pre></div>
+<p>Instead, it is recommended that you add &#39;.erb&#39; to your filename and use
+the asset_path helper like this:</p>
+<div class="highlight"><pre><code class="language-css" data-lang="css"><span class="o">...</span> <span class="nt">url</span><span class="o">(</span><span class="s2">'&lt;%= asset_path '</span><span class="nt">myfont-webfont</span><span class="nc">.ttf</span><span class="s2">' %&gt;'</span><span class="o">)</span>
+</code></pre></div>
+<p>Frankly, that seems kind of shitty to me. First of all, it requires you to change
+the file extension; it&#39;s a bit confusing (all of your Sass files will
+end with .erb) and you&#39;ll probably have to go
+out of your way to tell your editor that a .scss.erb file is
+actually Sass. Secondly, that syntax doesn&#39;t look like css or Sass. 
+So, I use the sass-rails helpers instead and keep
+my files extensions as scss. The final syntax looks like this:</p>
+<div class="highlight"><pre><code class="language-css" data-lang="css"><span class="k">@font-face</span> <span class="p">{</span>
+    <span class="nl">font-family</span><span class="p">:</span> <span class="s2">'MyFont'</span><span class="p">;</span>
+    <span class="nl">src</span><span class="p">:</span> <span class="sx">url(font-path('myfont-webfont.eot')</span> <span class="err">+</span> <span class="s1">"?#iefix"</span><span class="p">)</span> <span class="n">format</span><span class="p">(</span><span class="s2">'embedded-opentype'</span><span class="p">),</span>
+         <span class="sx">url(font-path('myfont-webfont.woff')</span><span class="p">)</span> <span class="n">format</span><span class="p">(</span><span class="s2">'woff'</span><span class="p">),</span> 
+         <span class="sx">url(font-path('myfont-webfont.ttf')</span><span class="p">)</span>  <span class="n">format</span><span class="p">(</span><span class="s2">'truetype'</span><span class="p">),</span>
+         <span class="sx">url(font-path('myfont-webfont.svg')</span> <span class="err">+</span> <span class="s1">"#MyFont"</span><span class="p">)</span> <span class="n">format</span><span class="p">(</span><span class="s2">'svg'</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Sass supports string concatenation, so I use that to pull off the
+syntax suggested for the eot and svg font files.</p>
+
+<h2>Conclusion</h2>
+
+<p>I found it to be a bit of work to get
+all this working. Hopefully, this helps you get your custom fonts 
+working quicker than I did. Feel free to let me know if you run into any
+issuse with this.</p>
+
+<p>If you have some flexibility around
+which fonts you are going to use, I suggest you check out <a href="http://www.google.com/webfonts">Google&#39;s web fonts</a>; it&#39;s an even easier way to start using new web fonts.</p>
+]]></content>
+  </entry>
+  
+</feed>

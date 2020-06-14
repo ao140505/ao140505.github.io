@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        
+        <title>
+          
+            Changing Behavior is not Refactoring
+          
+        </title>
+        
+        <meta name="description" content="A quick story about what refactoring is not.">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="google-site-verification" content="XA5dKuI49RXTWn5RxMyobOXEGgB6NjrbvtMFR30zbsY" />
+        <meta name="keywords" content="refactoring, testing">
+        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+        <link href='http://fonts.googleapis.com/css?family=Signika+Negative:400,700|Noto+Serif:400,700|Sansita+One' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" href="/css/base.css">
+    </head>
+    <body>
+      <header>
+        <div class="container">
+          <h1><a href="/">aokolish</a></h1>
+          <div id="header-nav">
+            <ul class="main-menu">
+              <li><a href="/about/">About</a></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <div class="container">
+        <h1 class="post-title">
+  
+    Changing Behavior is not Refactoring
+  
+  
+</h1>
+
+<div class="post-content">
+  <p>I recently inherited a new rails app with a broken build. In fact,
+<strong>20% of the tests for this app were failing</strong>.</p>
+
+<p>If fixing the build <em>sucks</em>, fixing someone else&#39;s build sucks even more.</p>
+
+<h2>Smelly Code</h2>
+
+<p>In the process of fixing the build, I
+read a decent amount of code that seemed smelly to me. One
+failing test caused me to uncover a line of code that seemed extra odd:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="no">SomeClass</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">params</span><span class="p">.</span><span class="nf">except</span><span class="p">(</span><span class="ss">:foo</span><span class="p">,</span> <span class="ss">:bar</span><span class="p">,</span> <span class="ss">:baz</span><span class="p">))</span>
+</code></pre></div>
+<p>I thought it would be better to do this:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="no">SomeClass</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">params</span><span class="p">.</span><span class="nf">select</span><span class="p">(</span><span class="ss">:foo</span><span class="p">))</span>
+</code></pre></div>
+<p>I thought this was a nice improvement because the old code
+was creating a <em>gigantic</em> hash with about 20 keys in it and passing it on.
+Meanwhile, <code>SomeClass</code> appeared to only use one key from the
+hash.</p>
+
+<p>Clearly, that was inefficient and confusing. So, I committed my <strong>small
+refactoring</strong> to my build fix branch.</p>
+
+<h2>Green Build</h2>
+
+<p>Once the build was green, I deployed the app to production (including
+my one line improvement). The rest of the day was quiet and everything seemed fine.</p>
+
+<p>24 hours later, I got a <em>nasty surprise</em> in the middle of my day off -
+my one line change had actually broken the site&#39;s <strong>most critical feature</strong>!</p>
+
+<p><img src="/img/ya-blew-it.png" alt="ya blew it"></p>
+
+<h2>This is not refactoring</h2>
+
+<p>I thought my one line change was harmless, but it broke the site for
+users and messed up my Saturday. What went wrong here?</p>
+
+<p>In hindsight, I was really fixing a defect - I knew I was changing the behavior
+of the code and that there was some risk that it could have unintended
+consequences.</p>
+
+<h2>How you can avoid this</h2>
+
+<p>Recognize that bug fixing and refactoring are two distinctly different activities.</p>
+
+<p><strong>Changing the behavior of the code is not refactoring!</strong></p>
+
+<p>Additionally, recognize that refactoring is going to be risky until
+you have certain things in place such as:</p>
+
+<ul>
+<li>familiarity with the business you work for</li>
+<li>passing tests</li>
+<li>decent test coverage</li>
+<li>integration tests</li>
+</ul>
+
+</div>
+
+
+
+
+      </div>
+
+      <footer>
+        <div class="container">
+          
+            <div class="recent-posts">
+              <h2>Recent Posts</h2>
+              
+              <a class="post-link" href="/blog/2015/06/22/shortcuts-for-navigating-nested-associations/">
+                <p class="post">
+                  <span class="post-title">Shortcuts for navigating nested associations</span>
+                  <span class="post-date">June 22, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/06/10/how-much-sql-do-you-need-to-know-to-land-a-rails-job/">
+                <p class="post">
+                  <span class="post-title">How much SQL do you need to know to land a Rails job?</span>
+                  <span class="post-date">June 10, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/26/how-to-simplify-active-record-scopes-that-reference-other-tables/">
+                <p class="post">
+                  <span class="post-title">How to simplify Active Record scopes that reference other models</span>
+                  <span class="post-date">May 26, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/21/3-resources-that-helped-me-get-started-with-refactoring/">
+                <p class="post">
+                  <span class="post-title">3 resources that helped me get started with refactoring</span>
+                  <span class="post-date">May 21, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/03/31/correcting-indentation-in-vim/">
+                <p class="post">
+                  <span class="post-title">Correcting Indentation in Vim</span>
+                  <span class="post-date">March 31, 2015</span>
+                </p>
+              </a>
+              
+              <p><a class="all-posts" href="/archive/">All posts</a></p>
+            </div>
+            <hr>
+          
+          <p class="social">
+            <a href="https://twitter.com/aokolish" target="_blank">
+              <i class="icon-twitter"></i>
+            </a>
+            <a href="https://github.com/aokolish" target="_blank">
+              <i class="icon-github"></i>
+            </a>
+            <a href="mailto:alex.okolish@gmail.com">
+              <i class="icon-envelope"></i>
+            </a>
+          </p>
+        </div>
+      </footer>
+
+      <script>
+          var _gaq=[['_setAccount','UA-27939733-1'],['_trackPageview']];
+          (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+          g.src='//www.google-analytics.com/ga.js';
+          s.parentNode.insertBefore(g,s)}(document,'script'));
+      </script>
+    </body>
+</html>

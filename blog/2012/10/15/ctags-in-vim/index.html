@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        
+        <title>
+          
+            Ctags in Vim
+          
+        </title>
+        
+        <meta name="description" content=" Ctags help you navigate large or unfamiliar code bases. For example, they
+help you quickly jump to method definitions. Prior to using ctags,
+I wou...">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="google-site-verification" content="XA5dKuI49RXTWn5RxMyobOXEGgB6NjrbvtMFR30zbsY" />
+        <meta name="keywords" content="ctags, vim, productivity, ruby">
+        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+        <link href='http://fonts.googleapis.com/css?family=Signika+Negative:400,700|Noto+Serif:400,700|Sansita+One' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" href="/css/base.css">
+    </head>
+    <body>
+      <header>
+        <div class="container">
+          <h1><a href="/">aokolish</a></h1>
+          <div id="header-nav">
+            <ul class="main-menu">
+              <li><a href="/about/">About</a></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <div class="container">
+        <h1 class="post-title">
+  
+    Ctags in Vim
+  
+  
+</h1>
+
+<div class="post-content">
+  <p>Ctags help you navigate large or unfamiliar code bases.  For example, they
+help you quickly jump to method definitions. Prior to using ctags,
+I would do the following:</p>
+
+<ol>
+<li>look at the method being called e.g. &#39;some<em>object.some</em>method&#39;</li>
+<li>do a project-wide search for &#39;some_method&#39; to determine which file to open</li>
+<li>open that file</li>
+<li>if the file is large, search for the method again</li>
+</ol>
+
+<p>I learned to do this relatively quickly and really got used to it. Ctags
+make this look ridiculous.</p>
+
+<p>With ctags, I simply put my cursor on the method and
+press <code>tt</code>(custom vim binding) and that immediately opens
+up the correct file on the correct line.</p>
+
+<p>This post covers how to get started with ctags and how to customize them
+a bit. Note: I&#39;m going to focus on how to use ctags on a mac with vim.
+Other operating systems and editors should require similar steps.</p>
+
+<h2>Basics</h2>
+
+<p>If you have <a href="http://mxcl.github.com/homebrew/">homebrew</a>, installation is simple:</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">brew <span class="nb">install </span>ctags
+</code></pre></div>
+<p>In your console, navigate to a project and run this:</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">ctags <span class="nt">-R</span> <span class="nt">--exclude</span><span class="o">=</span>.git
+</code></pre></div>
+<p>That should create a tags file in the root of the project. Now, find a method call
+within the project and press <code>Ctrl+]</code> to jump to the first matching
+tag. Then, press <code>Ctrl+t</code> to go back.</p>
+
+<p>If there are multiple matching tags you can go through them with <code>:tnext</code>
+and <code>:tprevious</code>.</p>
+
+<h2>Advanced Usage</h2>
+
+<p>These are some optimizations that make working with ctags much
+more streamlined for me.</p>
+
+<h3>Customize Vim</h3>
+
+<p>I find the default ctag commands a bit cumbersome to type so I use the
+following mappings in my .vimrc (including a mapping to regenerate the
+ctags when needed):</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="c"># manually, regenerate ctags</span>
+map &lt;Leader&gt;rt :!ctags <span class="nt">--extra</span><span class="o">=</span>+f <span class="nt">-R</span> <span class="k">*</span>&lt;CR&gt;&lt;CR&gt;
+
+<span class="c"># main mapping, go to first matching tag</span>
+map tt &lt;c-]&gt;
+
+<span class="c"># move forward and back through matching tags</span>
+map &lt;c-b&gt; :tprevious&lt;CR&gt;
+map &lt;c-n&gt; :tnext&lt;CR&gt;
+</code></pre></div>
+<h3>Automatically Generate Ctags with Git Hooks</h3>
+
+<p>Another thing you might want to avoid is having to manually update your
+ctags when the code changes over time.</p>
+
+<p>Fortunately, there is a way to automate the generation of ctags with git
+hooks and Tim Pope outlines it <a href="http://tbaggery.com/2011/08/08/effortless-ctags-with-git.html">in this blog post</a>.
+The gist of it is that you setup git hooks to automatically regenerate
+ctags in a background process after you do stuff like a <code>git pull,
+merge, commit, or rebase</code>.</p>
+
+<h2>Further Reading</h2>
+
+<ul>
+<li><code>:help tags</code> in vim</li>
+<li><code>man ctags</code></li>
+<li><a href="http://heim.no/VIM/2012/04/19/generate-ctags-for-all-bundled-gems-in-a-ruby-project/">generating ctags for gems in a project</a></li>
+<li><a href="http://ctags.sourceforge.net/index.html">http://ctags.sourceforge.net/index.html</a></li>
+</ul>
+
+</div>
+
+
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      var disqus_shortname = 'aokolish';
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  <!-- Go to www.addthis.com/dashboard to customize your tools -->
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-55666b2409e17b7d" async="async"></script>
+
+
+
+      </div>
+
+      <footer>
+        <div class="container">
+          
+            <div class="recent-posts">
+              <h2>Recent Posts</h2>
+              
+              <a class="post-link" href="/blog/2015/06/22/shortcuts-for-navigating-nested-associations/">
+                <p class="post">
+                  <span class="post-title">Shortcuts for navigating nested associations</span>
+                  <span class="post-date">June 22, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/06/10/how-much-sql-do-you-need-to-know-to-land-a-rails-job/">
+                <p class="post">
+                  <span class="post-title">How much SQL do you need to know to land a Rails job?</span>
+                  <span class="post-date">June 10, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/26/how-to-simplify-active-record-scopes-that-reference-other-tables/">
+                <p class="post">
+                  <span class="post-title">How to simplify Active Record scopes that reference other models</span>
+                  <span class="post-date">May 26, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/21/3-resources-that-helped-me-get-started-with-refactoring/">
+                <p class="post">
+                  <span class="post-title">3 resources that helped me get started with refactoring</span>
+                  <span class="post-date">May 21, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/03/31/correcting-indentation-in-vim/">
+                <p class="post">
+                  <span class="post-title">Correcting Indentation in Vim</span>
+                  <span class="post-date">March 31, 2015</span>
+                </p>
+              </a>
+              
+              <p><a class="all-posts" href="/archive/">All posts</a></p>
+            </div>
+            <hr>
+          
+          <p class="social">
+            <a href="https://twitter.com/aokolish" target="_blank">
+              <i class="icon-twitter"></i>
+            </a>
+            <a href="https://github.com/aokolish" target="_blank">
+              <i class="icon-github"></i>
+            </a>
+            <a href="mailto:alex.okolish@gmail.com">
+              <i class="icon-envelope"></i>
+            </a>
+          </p>
+        </div>
+      </footer>
+
+      <script>
+          var _gaq=[['_setAccount','UA-27939733-1'],['_trackPageview']];
+          (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+          g.src='//www.google-analytics.com/ga.js';
+          s.parentNode.insertBefore(g,s)}(document,'script'));
+      </script>
+    </body>
+</html>

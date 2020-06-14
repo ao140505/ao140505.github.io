@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        
+        <title>
+          
+            Shortcuts for navigating nested associations
+          
+        </title>
+        
+        <meta name="description" content="Shortcuts for navigating nested associations using Active Record">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="google-site-verification" content="XA5dKuI49RXTWn5RxMyobOXEGgB6NjrbvtMFR30zbsY" />
+        <meta name="keywords" content="Active Record, associations, nested associations">
+        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+        <link href='http://fonts.googleapis.com/css?family=Signika+Negative:400,700|Noto+Serif:400,700|Sansita+One' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" href="/css/base.css">
+    </head>
+    <body>
+      <header>
+        <div class="container">
+          <h1><a href="/">aokolish</a></h1>
+          <div id="header-nav">
+            <ul class="main-menu">
+              <li><a href="/about/">About</a></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <div class="container">
+        <h1 class="post-title">
+  
+    Shortcuts for navigating nested associations
+  
+  
+</h1>
+
+<div class="post-content">
+  <p>As your rails app gets more complex you will end up with models that are
+related to each other but with one or more models between them.</p>
+
+<p>Say you have the following models:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">Order</span>
+  <span class="n">has_many</span> <span class="ss">:line_items</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">LineItem</span>
+  <span class="n">has_one</span> <span class="ss">:product</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Product</span>
+  <span class="n">belongs_to</span> <span class="ss">:line_item</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>In this case, an <code>Order</code> can have many products, but you have to go through
+line items to get to them.</p>
+
+<p>So, when you have an order, how do you get its products?</p>
+
+<p>At first, you might write something like this:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"> <span class="n">order</span><span class="p">.</span><span class="nf">line_items</span><span class="p">.</span><span class="nf">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:product</span><span class="p">)</span>
+</code></pre></div>
+<p>This might seem ok at first, until you realize there&#39;s an N+1 problem
+here. Getting the products this way will run one SQL query for every
+product in the order:</p>
+<div class="highlight"><pre><code class="language-" data-lang="">LineItem Load (0.2ms)  SELECT "line_items".* FROM "line_items" WHERE "line_items"."order_id" = ?  [["order_id", 5]]
+Product Load (0.1ms)  SELECT  "products".* FROM "products" WHERE "products"."id" = ? LIMIT 1  [["id", 7]]
+Product Load (0.1ms)  SELECT  "products".* FROM "products" WHERE "products"."id" = ? LIMIT 1  [["id", 8]]
+</code></pre></div>
+<p>Depending on your SQL skill level, you might realize there&#39;s a way to
+get the products with one query; it&#39;s just unclear how to do this with
+Active Record.</p>
+
+<h2>The Solution</h2>
+
+<p>It turns out there is an elegant way to solve this with active record
+associations. In the rails guide, they refer to this as a &#39;short cut&#39;
+between models. All we need to do is add this one line to the <code>Order</code> class:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">Order</span>
+  <span class="n">has_many</span> <span class="ss">:line_items</span>
+  <span class="n">has_many</span> <span class="ss">:products</span><span class="p">,</span> <span class="ss">through: :line_items</span> <span class="c1"># new code</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>With this &#39;short cut&#39; in place we can get from an order to products with
+one method call:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">order</span><span class="p">.</span><span class="nf">products</span>
+</code></pre></div>
+<p>And that loads the products with one SQL query:</p>
+<div class="highlight"><pre><code class="language-" data-lang="">Product Load (0.1ms)  SELECT "products".* FROM "products"
+INNER JOIN "line_items" ON "products"."id" = "line_items"."product_id"
+WHERE "line_items"."order_id" = ?  [["order_id", 5]]
+</code></pre></div>
+<p>Another <strong>really important difference</strong> between this code and the <code>map</code> solution is
+that <code>order.products</code> does not load the records right away - instead, it
+returns an
+<a href="http://edgeapi.rubyonrails.org/classes/ActiveRecord/Associations/CollectionProxy.html">ActiveRecord_Associations_CollectionProxy</a>.
+The <code>map</code> version returns an array.</p>
+
+<p>What the heck is a collection proxy and why is that a good thing?</p>
+
+<p>Basically, the proxy is something that allows you further refine the SQL
+by chaining method calls onto it.</p>
+
+<p>For example, say you only want the products for the order with a price
+greater than a certain amount:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">order</span><span class="p">.</span><span class="nf">products</span><span class="p">.</span><span class="nf">where</span><span class="p">(</span><span class="s1">'price &gt; 300'</span><span class="p">)</span>
+</code></pre></div>
+<p>Powerful stuff.</p>
+
+<h2>But wait, there&#39;s more</h2>
+
+<p>Let&#39;s introduce one more model into this example to make it more
+realistic. Say, we have a <code>User</code> model like this:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">User</span>
+  <span class="n">has_many</span> <span class="ss">:orders</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>Now, how can we get a list of all of the products a user has ordered
+before?</p>
+
+<p>This is the same kind of problem. We know they are related to
+each other, but the relationship spans several models.</p>
+
+<p>It turns out, this is trivial with Active Record. We can just add
+another &#39;short cut&#39; with <code>has_many through</code> in the user class:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">User</span>
+  <span class="n">has_many</span> <span class="ss">:products</span><span class="p">,</span> <span class="ss">through: :orders</span>
+<span class="k">end</span>
+
+<span class="c1"># then, we can do this</span>
+<span class="n">some_user</span><span class="p">.</span><span class="nf">products</span> <span class="o">=&gt;</span> <span class="n">it</span> <span class="n">works!</span>
+</code></pre></div>
+<h2>Be careful though</h2>
+
+<p>There is one thing to look out for  with this last example though. What
+if a user purchased the same product more than once?</p>
+
+<p>Calling <code>user.products</code> will return <em>duplicate products</em>.</p>
+
+<p>There are a few ways to work around this:</p>
+
+<p>1) Remember to call &#39;distinct&#39; wherever you need the products:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">some_user</span><span class="p">.</span><span class="nf">products</span><span class="p">.</span><span class="nf">distinct</span>
+</code></pre></div>
+<p>2) Change our has_many through declaration to always return distinct products:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">User</span>
+  <span class="n">has_many</span> <span class="ss">:products</span><span class="p">,</span> <span class="o">-&gt;</span> <span class="p">{</span> <span class="n">distinct</span> <span class="p">},</span> <span class="ss">through: :orders</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>So, depending on your schema and situation you may need to look out for
+duplicate records being returned.</p>
+
+<h2>Want to try it out?</h2>
+
+<p>I set up a <a href="https://github.com/aokolish/active-record-shortcuts">demo rails
+app</a> on GitHub with
+these exact models. If you want to see firsthand how this works, clone
+the repo and fire up a console to try out a few queries.</p>
+
+<div class="newsletter-cta">
+  <p>
+    <b>
+      
+        Enjoyed this post?
+      
+    </b>
+  </p>
+  <p>
+    
+      Get my best stuff, delivered for free.
+    
+  </p>
+  <!-- Begin MailChimp Signup Form -->
+  <div id="mc_embed_signup">
+    <form action="//aokolish.us9.list-manage.com/subscribe/post?u=fadcc7c47381f2394d5a3d05a&amp;id=b567f497d8" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+      <div id="mc_embed_signup_scroll">
+        <div class="field-wrap">
+          <input type="text" value="" name="FNAME" class="required" id="mce-FNAME" placeholder="Your first name">
+          <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Your email">
+          <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+          <div style="position: absolute; left: -5000px;"><input type="text" name="b_fadcc7c47381f2394d5a3d05a_b567f497d8" tabindex="-1" value=""></div>
+          <input type="submit" value="Sign me up!" name="subscribe" id="mc-embedded-subscribe" class="button">
+        </div>
+      </div>
+    </form>
+  </div>
+  <!--End mc_embed_signup-->
+</div>
+
+</div>
+
+
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      var disqus_shortname = 'aokolish';
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  <!-- Go to www.addthis.com/dashboard to customize your tools -->
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-55666b2409e17b7d" async="async"></script>
+
+
+
+      </div>
+
+      <footer>
+        <div class="container">
+          
+            <div class="recent-posts">
+              <h2>Recent Posts</h2>
+              
+              <a class="post-link" href="/blog/2015/06/22/shortcuts-for-navigating-nested-associations/">
+                <p class="post">
+                  <span class="post-title">Shortcuts for navigating nested associations</span>
+                  <span class="post-date">June 22, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/06/10/how-much-sql-do-you-need-to-know-to-land-a-rails-job/">
+                <p class="post">
+                  <span class="post-title">How much SQL do you need to know to land a Rails job?</span>
+                  <span class="post-date">June 10, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/26/how-to-simplify-active-record-scopes-that-reference-other-tables/">
+                <p class="post">
+                  <span class="post-title">How to simplify Active Record scopes that reference other models</span>
+                  <span class="post-date">May 26, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/21/3-resources-that-helped-me-get-started-with-refactoring/">
+                <p class="post">
+                  <span class="post-title">3 resources that helped me get started with refactoring</span>
+                  <span class="post-date">May 21, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/03/31/correcting-indentation-in-vim/">
+                <p class="post">
+                  <span class="post-title">Correcting Indentation in Vim</span>
+                  <span class="post-date">March 31, 2015</span>
+                </p>
+              </a>
+              
+              <p><a class="all-posts" href="/archive/">All posts</a></p>
+            </div>
+            <hr>
+          
+          <p class="social">
+            <a href="https://twitter.com/aokolish" target="_blank">
+              <i class="icon-twitter"></i>
+            </a>
+            <a href="https://github.com/aokolish" target="_blank">
+              <i class="icon-github"></i>
+            </a>
+            <a href="mailto:alex.okolish@gmail.com">
+              <i class="icon-envelope"></i>
+            </a>
+          </p>
+        </div>
+      </footer>
+
+      <script>
+          var _gaq=[['_setAccount','UA-27939733-1'],['_trackPageview']];
+          (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+          g.src='//www.google-analytics.com/ga.js';
+          s.parentNode.insertBefore(g,s)}(document,'script'));
+      </script>
+    </body>
+</html>

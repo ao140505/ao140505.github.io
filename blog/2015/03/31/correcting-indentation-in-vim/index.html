@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        
+        <title>
+          
+            Correcting Indentation in Vim
+          
+        </title>
+        
+        <meta name="description" content="How you can quickly correct indentation in Vim">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="google-site-verification" content="XA5dKuI49RXTWn5RxMyobOXEGgB6NjrbvtMFR30zbsY" />
+        <meta name="keywords" content="correcting indentation, vim, indentation">
+        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+        <link href='http://fonts.googleapis.com/css?family=Signika+Negative:400,700|Noto+Serif:400,700|Sansita+One' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" href="/css/base.css">
+    </head>
+    <body>
+      <header>
+        <div class="container">
+          <h1><a href="/">aokolish</a></h1>
+          <div id="header-nav">
+            <ul class="main-menu">
+              <li><a href="/about/">About</a></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <div class="container">
+        <h1 class="post-title">
+  
+    Correcting Indentation in Vim
+  
+  
+</h1>
+
+<div class="post-content">
+  <p>Have you ever pasted code into Vim only to find that the formatting is
+completely messed up?</p>
+
+<p>Me too. And I used to find it really annoying, because it would take me
+roughly forever to correct every line, one at a time.</p>
+
+<p>Eventually, I realized that I changed indentation a lot. Like when I...</p>
+
+<ul>
+<li>move Sass to a place that is more or less indented</li>
+<li>copy CSS from Chrome into Vim</li>
+<li>refactor ruby code</li>
+</ul>
+
+<p>It felt silly to spend so much time fixing indentation. I figured
+there was a better way.</p>
+
+<p><code>=</code> is the key I was looking for. Once you learn how to use it, you will
+never want to go back to using any other text editor.</p>
+
+<h2>How do I use <code>=</code>?</h2>
+
+<p>Like a lot of things in Vim, you have a few choices.</p>
+
+<h2>1. Correct one line</h2>
+
+<p>Just press <code>==</code>.</p>
+
+<h2>2. Correct a chunk of text</h2>
+
+<p>Press <code>=</code>, followed by a motion (j, k, p, G, etc.)</p>
+
+<p>For example, I use <code>=ap</code> (&#39;around paragraph&#39;) a lot
+to indent entire methods or chunks of CSS with one move.</p>
+
+<h2>3. Visual</h2>
+
+<p>Visually select a block of text. Then, press <code>=</code>.</p>
+
+<h2>The moves I use every day</h2>
+
+<p>These are my favorite ways to use <code>=</code>:</p>
+<div class="highlight"><pre><code class="language-" data-lang=""> == - correct the current line
+=ap - correct the current 'paragraph'
+ =G - correct to the end of the file
+</code></pre></div>
+<h2>Can I correct an entire file?</h2>
+
+<p>Yup, no problem. Just do <code>gg=G</code>.</p>
+
+<h2>What is this magic?</h2>
+
+<p><code>=</code> is called a <strong>filter</strong>. I haven&#39;t found a great use for them other
+than <code>=</code>, but you can do some crazy things like run text through shell
+programs such as <code>sort</code> and <code>uniq</code>.</p>
+
+<p>Check the docs with <code>:help filter</code>.</p>
+
+<h2>Related Posts</h2>
+
+<ul>
+<li><a href="/blog/2014/11/05/rename-a-file-without-leaving-vim/">Rename a file without leaving Vim</a></li>
+<li><a href="/blog/2012/10/15/ctags-in-vim/">Ctags in Vim</a></li>
+</ul>
+
+<div class="newsletter-cta">
+  <p>
+    <b>
+      
+        Want to up your Vim game?
+      
+    </b>
+  </p>
+  <p>
+    
+      Sign up to get tips right in your inbox!
+    
+  </p>
+  <!-- Begin MailChimp Signup Form -->
+  <div id="mc_embed_signup">
+    <form action="//aokolish.us9.list-manage.com/subscribe/post?u=fadcc7c47381f2394d5a3d05a&amp;id=b567f497d8" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+      <div id="mc_embed_signup_scroll">
+        <div class="field-wrap">
+          <input type="text" value="" name="FNAME" class="required" id="mce-FNAME" placeholder="Your first name">
+          <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Your email">
+          <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+          <div style="position: absolute; left: -5000px;"><input type="text" name="b_fadcc7c47381f2394d5a3d05a_b567f497d8" tabindex="-1" value=""></div>
+          <input type="submit" value="Sign me up!" name="subscribe" id="mc-embedded-subscribe" class="button">
+        </div>
+      </div>
+    </form>
+  </div>
+  <!--End mc_embed_signup-->
+</div>
+
+</div>
+
+
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      var disqus_shortname = 'aokolish';
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  <!-- Go to www.addthis.com/dashboard to customize your tools -->
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-55666b2409e17b7d" async="async"></script>
+
+
+
+      </div>
+
+      <footer>
+        <div class="container">
+          
+            <div class="recent-posts">
+              <h2>Recent Posts</h2>
+              
+              <a class="post-link" href="/blog/2015/06/22/shortcuts-for-navigating-nested-associations/">
+                <p class="post">
+                  <span class="post-title">Shortcuts for navigating nested associations</span>
+                  <span class="post-date">June 22, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/06/10/how-much-sql-do-you-need-to-know-to-land-a-rails-job/">
+                <p class="post">
+                  <span class="post-title">How much SQL do you need to know to land a Rails job?</span>
+                  <span class="post-date">June 10, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/26/how-to-simplify-active-record-scopes-that-reference-other-tables/">
+                <p class="post">
+                  <span class="post-title">How to simplify Active Record scopes that reference other models</span>
+                  <span class="post-date">May 26, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/21/3-resources-that-helped-me-get-started-with-refactoring/">
+                <p class="post">
+                  <span class="post-title">3 resources that helped me get started with refactoring</span>
+                  <span class="post-date">May 21, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/03/31/correcting-indentation-in-vim/">
+                <p class="post">
+                  <span class="post-title">Correcting Indentation in Vim</span>
+                  <span class="post-date">March 31, 2015</span>
+                </p>
+              </a>
+              
+              <p><a class="all-posts" href="/archive/">All posts</a></p>
+            </div>
+            <hr>
+          
+          <p class="social">
+            <a href="https://twitter.com/aokolish" target="_blank">
+              <i class="icon-twitter"></i>
+            </a>
+            <a href="https://github.com/aokolish" target="_blank">
+              <i class="icon-github"></i>
+            </a>
+            <a href="mailto:alex.okolish@gmail.com">
+              <i class="icon-envelope"></i>
+            </a>
+          </p>
+        </div>
+      </footer>
+
+      <script>
+          var _gaq=[['_setAccount','UA-27939733-1'],['_trackPageview']];
+          (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+          g.src='//www.google-analytics.com/ga.js';
+          s.parentNode.insertBefore(g,s)}(document,'script'));
+      </script>
+    </body>
+</html>

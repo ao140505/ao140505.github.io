@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        
+        <title>
+          
+            8 Reasons to not use Ember.js for your next project
+          
+        </title>
+        
+        <meta name="description" content="8 Reasons to not use Ember.js for your next project">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="google-site-verification" content="XA5dKuI49RXTWn5RxMyobOXEGgB6NjrbvtMFR30zbsY" />
+        <meta name="keywords" content="ember.js, ember, rails">
+        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+        <link href='http://fonts.googleapis.com/css?family=Signika+Negative:400,700|Noto+Serif:400,700|Sansita+One' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" href="/css/base.css">
+    </head>
+    <body>
+      <header>
+        <div class="container">
+          <h1><a href="/">aokolish</a></h1>
+          <div id="header-nav">
+            <ul class="main-menu">
+              <li><a href="/about/">About</a></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <div class="container">
+        <h1 class="post-title">
+  
+    8 Reasons to not use Ember.js for your next project
+  
+  
+</h1>
+
+<div class="post-content">
+  <p>I was very fortunate a few months ago to have the opportunity to learn
+and use Ember.js to build a dashboard within an existing rails
+application.</p>
+
+<p>The dashboard felt like a standalone app within our main site
+and we wanted it to feel very snappy. We decided to give Ember a
+shot for building it.</p>
+
+<p>I worked on this with a co-worker and it took us about
+3 months to complete our project.</p>
+
+<p>This post describes a few of the reasons I would strongly hesitate to
+reach for this type of framework again. If you are considering investing
+time into learning a client-side MVC framework, I suggest you read this
+to see what problems you might run into.</p>
+
+<h2>1. Silent errors</h2>
+
+<p>One thing that really frustrated me about developing in Ember is all of
+the silent failures we encountered. We had to be very vigilant not to
+check in code that caused these silent failures.</p>
+
+<p>For example, take this mustache template that has a typo in it:</p>
+<div class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;p&gt;</span>{{user.first_nam}}<span class="nt">&lt;/p&gt;</span>
+</code></pre></div>
+<p>This code is wrong. Yet, it doesn&#39;t even cause a <strong>JavaScript error</strong>.</p>
+
+<p>An ERB or Haml version of this same template would fail loudly
+with a <code>NoMethodError</code>; the code would never make it to production.</p>
+
+<blockquote>
+<p>Silent failures do not make my job easier</p>
+</blockquote>
+
+<h2>2. Deep linking - unreliable</h2>
+
+<p>Ember&#39;s router seemed like a great feature to me. I liked that every
+page of our app would have a URL - just like a server-side app.
+As our app became more complex though, deep linking started
+<strong>randomly not working</strong>.</p>
+
+<p>For example, consider these Ember routes:</p>
+<div class="highlight"><pre><code class="language-" data-lang="">/users/
+/users/15/
+/users/15/photos/
+</code></pre></div>
+<p>We ran into situations where this would work:</p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. load app and end up on /users/
+2. click on a user - /users/15
+3. click on photos - /users/15/photos/
+4. the app works
+</code></pre></div>
+<p>Yet, visiting the same route directly <strong>would not work</strong>:</p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. visit /users/15/photos/ directly
+2. the app breaks
+</code></pre></div>
+<p>These types of failures where inconsistent and very confusing. In about
+50% of the cases, visiting a URL directly would work. The rest of the time, it
+would not.</p>
+
+<p>This was extremely frustrating, and lead to many confusing debugging
+sessions. And we now had <strong>two scenarios to test
+for every route in the app</strong>. 1) Visiting the route from within the app.
+2) visiting an ember route directly.</p>
+
+<blockquote>
+<p>I have never seen this issue with a normal rails app</p>
+</blockquote>
+
+<h2>3. Few libraries</h2>
+
+<p>Our app required pagination. At the time we wrote our Ember app, I found
+no Ember add-ons that could help us write pagination.</p>
+
+<p>The only thing I could find was a script that you could get you started
+with pagination in Ember. It didn&#39;t work with our version of Ember and
+it had to be extended in many ways just to create very basic pagination.
+Consequently, I had to spend a lot of time writing pagination code.
+That work was surprisingly time-consuming and really extended the project
+timeline.</p>
+
+<blockquote>
+<p>I felt that I was re-inventing the wheel, and poorly because I had a
+deadline to hit.</p>
+</blockquote>
+
+<h2>4. Few code examples / resources</h2>
+
+<p>This is not surprising given that Ember is a new framework. But, we
+lost a lot of time working with issues where there were no blog posts or
+stack overflow posts to be found. We were totally on our own
+to figure these issues out and quite often the solutions did not even
+make sense to us.</p>
+
+<h2>5. Slower development</h2>
+
+<p>Our development speed was about 1/3 of what it
+would have been with normal rails development. We
+spent most of our time trying to learn the framework or being really
+confused as to why our code was not working. After
+three months, I still didn&#39;t feel that I understood Ember.</p>
+
+<h2>6. Added layers and complexity</h2>
+
+<p>Rails developers and critics often talk about rails <em>magic</em>.
+Rails is powerful because it handles a lot of the complex and
+unglamorous work from you. Ember aims to do the same, but somehow falls short.</p>
+
+<p>Where Rails <em>magic</em> enables you to be very productive. Ember <em>magic</em>
+seemed to make us less productive. Topics as simple as <strong>how links work</strong>
+became things that we gave up trying to understand.</p>
+
+<p>Additionally, using Ember really increased the layers in our
+stack. Consider this diagram:</p>
+
+<p><img src="/img/ember-layers.png" alt="ember layers"></p>
+
+<p>All of that complexity increases development time, increases the learning curve,
+and increases confusion. It became harder for an individual to
+to develop a feature on their own.</p>
+
+<blockquote>
+<p>Layers and complexity - not things I seek when choosing
+my tools</p>
+</blockquote>
+
+<h2>7. It restricted our design</h2>
+
+<p>There were several instances where using Ember
+restricted our website&#39;s design. Had we been using rails and vanilla
+JavaScript, we could have implemented what we wanted. Instead, we had to
+make design compromises to fit our ideas into what was possible with the
+framework.</p>
+
+<blockquote>
+<p>Sticking with the raw materials - HTML, CSS, and JavaScript is
+much less limiting on your design than using a complex framework</p>
+</blockquote>
+
+<h2>8. JavaScript</h2>
+
+<p>Writing most of your app in JavaScript is simly not fun. JavaScript is known
+for being designed in <strong>10 days</strong>. Ruby is known for being designed for
+<strong>developer happiness</strong> - <em>which sounds better to you?</em></p>
+
+<h2>Conclusion</h2>
+
+<p>I wish I had known more about the problems I would face before diving into Ember.
+Had I known about them, I would not have chosen Ember.</p>
+
+<p>I think we&#39;ve all seen enough ToDo apps demonstrating how &quot;great&quot; these
+frameworks are.  It&#39;s time for people to start sharing their
+experiences using these frameworks to build real applications.</p>
+
+<p>If your priorities include shipping features quickly, developer
+happiness, maintainable code, and design flexibility, skip
+the hype and stick with tools that are proven to work.</p>
+
+<h2>Further Reading</h2>
+
+<ul>
+<li><a href="http://mir.aculo.us/2013/02/26/client-side-mvc-is-not-a-silver-bullet/">Client-side MVC is not a silver bullet</a></li>
+<li><a href="http://www.shopify.com/technology/15646068-rebuilding-the-shopify-admin-improving-developer-productivity-by-deleting-28-000-lines-of-javascript">Rebuilding the Shopify Admin: Improving Developer Productivity by Deleting 28,000 lines of JavaScript</a></li>
+</ul>
+
+</div>
+
+
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      var disqus_shortname = 'aokolish';
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  <!-- Go to www.addthis.com/dashboard to customize your tools -->
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-55666b2409e17b7d" async="async"></script>
+
+
+
+      </div>
+
+      <footer>
+        <div class="container">
+          
+            <div class="recent-posts">
+              <h2>Recent Posts</h2>
+              
+              <a class="post-link" href="/blog/2015/06/22/shortcuts-for-navigating-nested-associations/">
+                <p class="post">
+                  <span class="post-title">Shortcuts for navigating nested associations</span>
+                  <span class="post-date">June 22, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/06/10/how-much-sql-do-you-need-to-know-to-land-a-rails-job/">
+                <p class="post">
+                  <span class="post-title">How much SQL do you need to know to land a Rails job?</span>
+                  <span class="post-date">June 10, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/26/how-to-simplify-active-record-scopes-that-reference-other-tables/">
+                <p class="post">
+                  <span class="post-title">How to simplify Active Record scopes that reference other models</span>
+                  <span class="post-date">May 26, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/21/3-resources-that-helped-me-get-started-with-refactoring/">
+                <p class="post">
+                  <span class="post-title">3 resources that helped me get started with refactoring</span>
+                  <span class="post-date">May 21, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/03/31/correcting-indentation-in-vim/">
+                <p class="post">
+                  <span class="post-title">Correcting Indentation in Vim</span>
+                  <span class="post-date">March 31, 2015</span>
+                </p>
+              </a>
+              
+              <p><a class="all-posts" href="/archive/">All posts</a></p>
+            </div>
+            <hr>
+          
+          <p class="social">
+            <a href="https://twitter.com/aokolish" target="_blank">
+              <i class="icon-twitter"></i>
+            </a>
+            <a href="https://github.com/aokolish" target="_blank">
+              <i class="icon-github"></i>
+            </a>
+            <a href="mailto:alex.okolish@gmail.com">
+              <i class="icon-envelope"></i>
+            </a>
+          </p>
+        </div>
+      </footer>
+
+      <script>
+          var _gaq=[['_setAccount','UA-27939733-1'],['_trackPageview']];
+          (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+          g.src='//www.google-analytics.com/ga.js';
+          s.parentNode.insertBefore(g,s)}(document,'script'));
+      </script>
+    </body>
+</html>

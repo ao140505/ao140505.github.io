@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        
+        <title>
+          
+            Running Spinach Features with Zeus
+          
+        </title>
+        
+        <meta name="description" content=" If you haven&#39;t tried zeus yet,
+you are missing out on some free speed. It is similar to spork
+but aims to be language agnostic. The main thing...">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="google-site-verification" content="XA5dKuI49RXTWn5RxMyobOXEGgB6NjrbvtMFR30zbsY" />
+        <meta name="keywords" content="zeus, spinach, integration testing">
+        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+        <link href='http://fonts.googleapis.com/css?family=Signika+Negative:400,700|Noto+Serif:400,700|Sansita+One' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" href="/css/base.css">
+    </head>
+    <body>
+      <header>
+        <div class="container">
+          <h1><a href="/">aokolish</a></h1>
+          <div id="header-nav">
+            <ul class="main-menu">
+              <li><a href="/about/">About</a></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <div class="container">
+        <h1 class="post-title">
+  
+    Running Spinach Features with Zeus
+  
+  
+</h1>
+
+<div class="post-content">
+  <p>If you haven&#39;t tried <a href="https://github.com/burke/zeus">zeus</a> yet,
+you are missing out on some free speed.  It is similar to spork
+but aims to be language agnostic. The main thing I find exciting
+about it is that it can be used to do things other than
+run tests such as loading consoles and running generators.</p>
+
+<p>I like to write my integration tests with <a href="https://github.com/codegram/spinach">spinach</a>,
+and this does not work out of the box with zeus.
+This post outlines how to get them
+working together - it&#39;s pretty simple.</p>
+
+<!-- more -->
+
+<h2>What You Have to Do</h2>
+
+<p>Run <code>zeus init</code> to generates two zeus config files -
+custom_plan.rb and zeus.json.</p>
+
+<p>Fill in custom_plan.rb with the following code:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="nb">require</span> <span class="s1">'zeus/rails'</span>
+
+<span class="k">class</span> <span class="nc">CustomPlan</span> <span class="o">&lt;</span> <span class="no">Zeus</span><span class="o">::</span><span class="no">Rails</span>
+
+  <span class="k">def</span> <span class="nf">spinach_environment</span>
+    <span class="nb">require</span> <span class="s1">'spinach'</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">spinach</span>
+    <span class="n">spinach_main</span> <span class="o">=</span> <span class="no">Spinach</span><span class="o">::</span><span class="no">Cli</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="no">ARGV</span><span class="p">.</span><span class="nf">dup</span><span class="p">)</span>
+    <span class="nb">exit</span> <span class="n">spinach_main</span><span class="p">.</span><span class="nf">run</span>
+  <span class="k">end</span>
+
+<span class="k">end</span>
+
+<span class="no">Zeus</span><span class="p">.</span><span class="nf">plan</span> <span class="o">=</span> <span class="no">CustomPlan</span><span class="p">.</span><span class="nf">new</span>
+</code></pre></div>
+<p>Replace cucumber with spinach in zeus.json so that zeus knows what to
+run on startup:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="p">{</span>
+  <span class="s2">"command"</span><span class="p">:</span> <span class="s2">"ruby -rubygems -r./custom_plan -eZeus.go"</span><span class="p">,</span>
+
+  <span class="s2">"plan"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">"boot"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">"default_bundle"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"development_environment"</span><span class="p">:</span> <span class="p">{</span>
+          <span class="s2">"prerake"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"rake"</span><span class="p">:</span> <span class="p">[]},</span>
+          <span class="s2">"runner"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"r"</span><span class="p">],</span>
+          <span class="s2">"console"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"c"</span><span class="p">],</span>
+          <span class="s2">"server"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"s"</span><span class="p">],</span>
+          <span class="s2">"generate"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"g"</span><span class="p">],</span>
+          <span class="s2">"destroy"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"d"</span><span class="p">],</span>
+          <span class="s2">"dbconsole"</span><span class="p">:</span> <span class="p">[]</span>
+        <span class="p">},</span>
+        <span class="s2">"test_environment"</span><span class="p">:</span> <span class="p">{</span>
+          <span class="s2">"spinach_environment"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"spinach"</span><span class="p">:</span> <span class="p">[]},</span>
+          <span class="s2">"test_helper"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"test"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"rspec"</span><span class="p">,</span> <span class="s2">"testrb"</span><span class="p">]}</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+</code></pre></div>
+<h2>Dependencies Used</h2>
+
+<p>Both spinach and zeus are fairly new so this solution may not work with
+future versions of them. This works with:</p>
+
+<ul>
+<li>zeus version 0.13.2</li>
+<li>spinach 0.7.0</li>
+<li>spinach-rails 0.1.8 (for a rails app)</li>
+</ul>
+
+<h2>Useful Resources:</h2>
+
+<ul>
+<li>The <a href="https://github.com/burke/zeus">zeus</a> repo on github</li>
+<li><a href="https://github.com/codegram/spinach">spinach</a> on github</li>
+</ul>
+
+</div>
+
+
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      var disqus_shortname = 'aokolish';
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  <!-- Go to www.addthis.com/dashboard to customize your tools -->
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-55666b2409e17b7d" async="async"></script>
+
+
+
+      </div>
+
+      <footer>
+        <div class="container">
+          
+            <div class="recent-posts">
+              <h2>Recent Posts</h2>
+              
+              <a class="post-link" href="/blog/2015/06/22/shortcuts-for-navigating-nested-associations/">
+                <p class="post">
+                  <span class="post-title">Shortcuts for navigating nested associations</span>
+                  <span class="post-date">June 22, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/06/10/how-much-sql-do-you-need-to-know-to-land-a-rails-job/">
+                <p class="post">
+                  <span class="post-title">How much SQL do you need to know to land a Rails job?</span>
+                  <span class="post-date">June 10, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/26/how-to-simplify-active-record-scopes-that-reference-other-tables/">
+                <p class="post">
+                  <span class="post-title">How to simplify Active Record scopes that reference other models</span>
+                  <span class="post-date">May 26, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/21/3-resources-that-helped-me-get-started-with-refactoring/">
+                <p class="post">
+                  <span class="post-title">3 resources that helped me get started with refactoring</span>
+                  <span class="post-date">May 21, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/03/31/correcting-indentation-in-vim/">
+                <p class="post">
+                  <span class="post-title">Correcting Indentation in Vim</span>
+                  <span class="post-date">March 31, 2015</span>
+                </p>
+              </a>
+              
+              <p><a class="all-posts" href="/archive/">All posts</a></p>
+            </div>
+            <hr>
+          
+          <p class="social">
+            <a href="https://twitter.com/aokolish" target="_blank">
+              <i class="icon-twitter"></i>
+            </a>
+            <a href="https://github.com/aokolish" target="_blank">
+              <i class="icon-github"></i>
+            </a>
+            <a href="mailto:alex.okolish@gmail.com">
+              <i class="icon-envelope"></i>
+            </a>
+          </p>
+        </div>
+      </footer>
+
+      <script>
+          var _gaq=[['_setAccount','UA-27939733-1'],['_trackPageview']];
+          (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+          g.src='//www.google-analytics.com/ga.js';
+          s.parentNode.insertBefore(g,s)}(document,'script'));
+      </script>
+    </body>
+</html>

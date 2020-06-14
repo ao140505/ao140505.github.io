@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        
+        <title>
+          
+            Testing Hover Events with Capybara
+          
+        </title>
+        
+        <meta name="description" content=" Recently, I needed to write an integration test that involved hovering
+on elements. It was a bit painful to figure out, but the solution is simple...">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="google-site-verification" content="XA5dKuI49RXTWn5RxMyobOXEGgB6NjrbvtMFR30zbsY" />
+        <meta name="keywords" content="rails, testing, capybara, hover event, trigger">
+        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+        <link href='http://fonts.googleapis.com/css?family=Signika+Negative:400,700|Noto+Serif:400,700|Sansita+One' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" href="/css/base.css">
+    </head>
+    <body>
+      <header>
+        <div class="container">
+          <h1><a href="/">aokolish</a></h1>
+          <div id="header-nav">
+            <ul class="main-menu">
+              <li><a href="/about/">About</a></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <div class="container">
+        <h1 class="post-title">
+  
+    Testing Hover Events with Capybara
+  
+  
+</h1>
+
+<div class="post-content">
+  <p>Recently, I needed to write an integration test that involved hovering
+on elements. It was a bit painful to figure out, but the solution is simple.
+There are three things you need to know:</p>
+
+<ol>
+<li>You need to use capybara-webkit as you javascript driver</li>
+<li>You have to trigger the &#39;mouseover&#39; event</li>
+<li>This solution isn&#39;t well documented</li>
+</ol>
+
+<p>When I started trying to figure out how to hover on elements in my
+tests, I only found one working solution and it involved triggering
+events via jQuery like this:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">page</span><span class="p">.</span><span class="nf">execute_script</span><span class="p">(</span><span class="s1">'$("#element").trigger("mouseenter")'</span><span class="p">)</span>
+</code></pre></div>
+<p>I was happy that it worked, but having to use to use jQuery in the
+middle of a spec felt like a hack. It turns out, the solution is pretty simple.</p>
+
+<p>First, you need to use <a href="https://github.com/thoughtbot/capybara-webkit">capybara-webkit</a>
+in order to go with this solution. 
+Add it to your Gemfile with <code>gem &quot;capybara-webkit&quot;</code> and run <code>bundle</code> 
+to install the gem. Then, you need to add a line to your spec_helper file to tell 
+rspec to use that driver for your tests involving js (default is
+selenium):</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="no">RSpec</span><span class="p">.</span><span class="nf">configure</span> <span class="k">do</span> <span class="o">|</span><span class="n">config</span><span class="o">|</span>
+  <span class="c1"># ...</span>
+  <span class="no">Capybara</span><span class="p">.</span><span class="nf">javascript_driver</span> <span class="o">=</span> <span class="ss">:webkit</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>Once you are using capybara-webkit, you can trigger events on elements
+such as a mouseover event:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="n">page</span><span class="p">.</span><span class="nf">find</span><span class="p">(</span><span class="s1">'#element'</span><span class="p">).</span><span class="nf">trigger</span><span class="p">(</span><span class="ss">:mouseover</span><span class="p">)</span>
+</code></pre></div>
+<p>This code looks so similar to the jQuery-based solution that I was
+surprised that I did not figure this out quicker. What tripped me
+up though was the specific event that I was triggering.
+Initially, I was triggering the mouseenter event. When you do that, you
+get no errors but it doesn&#39;t seem to do anything. I did some
+experimenting and it seems that no errors are raised when you trigger an
+unsupported event (such as a made up one). Anyhow, hovering on elements
+turns out to be pretty simple.</p>
+
+</div>
+
+
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      var disqus_shortname = 'aokolish';
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  <!-- Go to www.addthis.com/dashboard to customize your tools -->
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-55666b2409e17b7d" async="async"></script>
+
+
+
+      </div>
+
+      <footer>
+        <div class="container">
+          
+            <div class="recent-posts">
+              <h2>Recent Posts</h2>
+              
+              <a class="post-link" href="/blog/2015/06/22/shortcuts-for-navigating-nested-associations/">
+                <p class="post">
+                  <span class="post-title">Shortcuts for navigating nested associations</span>
+                  <span class="post-date">June 22, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/06/10/how-much-sql-do-you-need-to-know-to-land-a-rails-job/">
+                <p class="post">
+                  <span class="post-title">How much SQL do you need to know to land a Rails job?</span>
+                  <span class="post-date">June 10, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/26/how-to-simplify-active-record-scopes-that-reference-other-tables/">
+                <p class="post">
+                  <span class="post-title">How to simplify Active Record scopes that reference other models</span>
+                  <span class="post-date">May 26, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/21/3-resources-that-helped-me-get-started-with-refactoring/">
+                <p class="post">
+                  <span class="post-title">3 resources that helped me get started with refactoring</span>
+                  <span class="post-date">May 21, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/03/31/correcting-indentation-in-vim/">
+                <p class="post">
+                  <span class="post-title">Correcting Indentation in Vim</span>
+                  <span class="post-date">March 31, 2015</span>
+                </p>
+              </a>
+              
+              <p><a class="all-posts" href="/archive/">All posts</a></p>
+            </div>
+            <hr>
+          
+          <p class="social">
+            <a href="https://twitter.com/aokolish" target="_blank">
+              <i class="icon-twitter"></i>
+            </a>
+            <a href="https://github.com/aokolish" target="_blank">
+              <i class="icon-github"></i>
+            </a>
+            <a href="mailto:alex.okolish@gmail.com">
+              <i class="icon-envelope"></i>
+            </a>
+          </p>
+        </div>
+      </footer>
+
+      <script>
+          var _gaq=[['_setAccount','UA-27939733-1'],['_trackPageview']];
+          (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+          g.src='//www.google-analytics.com/ga.js';
+          s.parentNode.insertBefore(g,s)}(document,'script'));
+      </script>
+    </body>
+</html>

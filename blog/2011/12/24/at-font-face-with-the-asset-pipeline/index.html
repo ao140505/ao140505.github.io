@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        
+        <title>
+          
+            @font-face with the Asset Pipeline
+          
+        </title>
+        
+        <meta name="description" content=" TL;DR If you are new to the asset pipeline in rails, using custom fonts can be
+a bit confusing. This is how I recommend getting started: add fonts...">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="google-site-verification" content="XA5dKuI49RXTWn5RxMyobOXEGgB6NjrbvtMFR30zbsY" />
+        <meta name="keywords" content="rails, asset, pipeline, font-face, @font-face, fonts, custom fonts">
+        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+        <link href='http://fonts.googleapis.com/css?family=Signika+Negative:400,700|Noto+Serif:400,700|Sansita+One' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" href="/css/base.css">
+    </head>
+    <body>
+      <header>
+        <div class="container">
+          <h1><a href="/">aokolish</a></h1>
+          <div id="header-nav">
+            <ul class="main-menu">
+              <li><a href="/about/">About</a></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <div class="container">
+        <h1 class="post-title">
+  
+    @font-face with the Asset Pipeline
+  
+  
+</h1>
+
+<div class="post-content">
+  <h2>TL;DR</h2>
+
+<p>If you are new to the asset pipeline in rails, using custom fonts can be
+a bit confusing. This is how I recommend getting started:</p>
+
+<ol>
+<li>add fonts in app/assets/fonts/</li>
+<li>add the fonts folder to the asset path</li>
+<li>use the sass-rails helpers to reference the font files</li>
+<li>use the fontspring @font-face syntax</li>
+</ol>
+
+<h2>Getting Started</h2>
+
+<p>To get started, you need a custom font to use in your rails app.
+Personally, I was starting out with an icon font - <a href="http://medialoot.com/item/signify-free-icon-font/">Signify-lite</a>. If you plan to support all devices, you will need four different font files: </p>
+
+<ol>
+<li>embedded open type (.eot)</li>
+<li>woff (.woff)</li>
+<li>truetype (.ttf)</li>
+<li>scalable vector graphics (.svg)</li>
+</ol>
+
+<p>If you are missing one or more of these, fontsquirrel.com has a <a href="http://www.fontsquirrel.com/fontface/generator">free generator</a> that can create the other font files based off of the file that are starting out with.</p>
+
+<h2>Add the Fonts Folder to the Asset Path</h2>
+
+<p>You can certainly put your fonts wherever you like, but a &#39;fonts&#39; folder
+right under app/assets makes the most sense to me. With the asset
+pipeline, you have to do a bit of work if you want to do that; you
+have to add that folder to the &#39;asset path&#39;. In this case, you just add
+this to your config/application.rb:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="c1"># add app/assets/fonts to the asset path</span>
+<span class="n">config</span><span class="p">.</span><span class="nf">assets</span><span class="p">.</span><span class="nf">paths</span> <span class="o">&lt;&lt;</span> <span class="no">Rails</span><span class="p">.</span><span class="nf">root</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="s2">"app"</span><span class="p">,</span> <span class="s2">"assets"</span><span class="p">,</span> <span class="s2">"fonts"</span><span class="p">)</span>
+</code></pre></div>
+<p>Restart your server, and that will take effect.</p>
+
+<h2>@font-face declaration</h2>
+
+<p>The best cross-browser font-face syntax appears to be the <a href="http://www.fontspring.com/blog/the-new-bulletproof-font-face-syntax">font spring</a> syntax:</p>
+<div class="highlight"><pre><code class="language-" data-lang="">@font-face {
+    font-family: 'MyFontFamily';
+    src: url('myfont-webfont.eot?#iefix') format('embedded-opentype'), 
+         url('myfont-webfont.woff') format('woff'), 
+         url('myfont-webfont.ttf')  format('truetype'),
+         url('myfont-webfont.svg#svgFontName') format('svg');
+}
+</code></pre></div>
+<p>If you are already familiar with the asset pipeline, you know
+that you cannot reference your font like this:</p>
+<div class="highlight"><pre><code class="language-css" data-lang="css"><span class="o">...</span> <span class="nt">url</span><span class="o">(</span><span class="s2">'/assets/fonts/myfont-webfont.ttf'</span><span class="o">)</span>
+</code></pre></div>
+<p>Instead, it is recommended that you add &#39;.erb&#39; to your filename and use
+the asset_path helper like this:</p>
+<div class="highlight"><pre><code class="language-css" data-lang="css"><span class="o">...</span> <span class="nt">url</span><span class="o">(</span><span class="s2">'&lt;%= asset_path '</span><span class="nt">myfont-webfont</span><span class="nc">.ttf</span><span class="s2">' %&gt;'</span><span class="o">)</span>
+</code></pre></div>
+<p>Frankly, that seems kind of shitty to me. First of all, it requires you to change
+the file extension; it&#39;s a bit confusing (all of your Sass files will
+end with .erb) and you&#39;ll probably have to go
+out of your way to tell your editor that a .scss.erb file is
+actually Sass. Secondly, that syntax doesn&#39;t look like css or Sass. 
+So, I use the sass-rails helpers instead and keep
+my files extensions as scss. The final syntax looks like this:</p>
+<div class="highlight"><pre><code class="language-css" data-lang="css"><span class="k">@font-face</span> <span class="p">{</span>
+    <span class="nl">font-family</span><span class="p">:</span> <span class="s2">'MyFont'</span><span class="p">;</span>
+    <span class="nl">src</span><span class="p">:</span> <span class="sx">url(font-path('myfont-webfont.eot')</span> <span class="err">+</span> <span class="s1">"?#iefix"</span><span class="p">)</span> <span class="n">format</span><span class="p">(</span><span class="s2">'embedded-opentype'</span><span class="p">),</span>
+         <span class="sx">url(font-path('myfont-webfont.woff')</span><span class="p">)</span> <span class="n">format</span><span class="p">(</span><span class="s2">'woff'</span><span class="p">),</span> 
+         <span class="sx">url(font-path('myfont-webfont.ttf')</span><span class="p">)</span>  <span class="n">format</span><span class="p">(</span><span class="s2">'truetype'</span><span class="p">),</span>
+         <span class="sx">url(font-path('myfont-webfont.svg')</span> <span class="err">+</span> <span class="s1">"#MyFont"</span><span class="p">)</span> <span class="n">format</span><span class="p">(</span><span class="s2">'svg'</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Sass supports string concatenation, so I use that to pull off the
+syntax suggested for the eot and svg font files.</p>
+
+<h2>Conclusion</h2>
+
+<p>I found it to be a bit of work to get
+all this working. Hopefully, this helps you get your custom fonts 
+working quicker than I did. Feel free to let me know if you run into any
+issuse with this.</p>
+
+<p>If you have some flexibility around
+which fonts you are going to use, I suggest you check out <a href="http://www.google.com/webfonts">Google&#39;s web fonts</a>; it&#39;s an even easier way to start using new web fonts.</p>
+
+</div>
+
+
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      var disqus_shortname = 'aokolish';
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  <!-- Go to www.addthis.com/dashboard to customize your tools -->
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-55666b2409e17b7d" async="async"></script>
+
+
+
+      </div>
+
+      <footer>
+        <div class="container">
+          
+            <div class="recent-posts">
+              <h2>Recent Posts</h2>
+              
+              <a class="post-link" href="/blog/2015/06/22/shortcuts-for-navigating-nested-associations/">
+                <p class="post">
+                  <span class="post-title">Shortcuts for navigating nested associations</span>
+                  <span class="post-date">June 22, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/06/10/how-much-sql-do-you-need-to-know-to-land-a-rails-job/">
+                <p class="post">
+                  <span class="post-title">How much SQL do you need to know to land a Rails job?</span>
+                  <span class="post-date">June 10, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/26/how-to-simplify-active-record-scopes-that-reference-other-tables/">
+                <p class="post">
+                  <span class="post-title">How to simplify Active Record scopes that reference other models</span>
+                  <span class="post-date">May 26, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/21/3-resources-that-helped-me-get-started-with-refactoring/">
+                <p class="post">
+                  <span class="post-title">3 resources that helped me get started with refactoring</span>
+                  <span class="post-date">May 21, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/03/31/correcting-indentation-in-vim/">
+                <p class="post">
+                  <span class="post-title">Correcting Indentation in Vim</span>
+                  <span class="post-date">March 31, 2015</span>
+                </p>
+              </a>
+              
+              <p><a class="all-posts" href="/archive/">All posts</a></p>
+            </div>
+            <hr>
+          
+          <p class="social">
+            <a href="https://twitter.com/aokolish" target="_blank">
+              <i class="icon-twitter"></i>
+            </a>
+            <a href="https://github.com/aokolish" target="_blank">
+              <i class="icon-github"></i>
+            </a>
+            <a href="mailto:alex.okolish@gmail.com">
+              <i class="icon-envelope"></i>
+            </a>
+          </p>
+        </div>
+      </footer>
+
+      <script>
+          var _gaq=[['_setAccount','UA-27939733-1'],['_trackPageview']];
+          (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+          g.src='//www.google-analytics.com/ga.js';
+          s.parentNode.insertBefore(g,s)}(document,'script'));
+      </script>
+    </body>
+</html>

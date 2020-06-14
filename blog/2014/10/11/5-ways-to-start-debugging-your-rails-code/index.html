@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        
+        <title>
+          
+            5 ways to start debugging your rails code
+          
+        </title>
+        
+        <meta name="description" content="5 ways to start debugging your rails code">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="google-site-verification" content="XA5dKuI49RXTWn5RxMyobOXEGgB6NjrbvtMFR30zbsY" />
+        <meta name="keywords" content="debugging rails, debug rails, debugging tips">
+        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+        <link href='http://fonts.googleapis.com/css?family=Signika+Negative:400,700|Noto+Serif:400,700|Sansita+One' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" href="/css/base.css">
+    </head>
+    <body>
+      <header>
+        <div class="container">
+          <h1><a href="/">aokolish</a></h1>
+          <div id="header-nav">
+            <ul class="main-menu">
+              <li><a href="/about/">About</a></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <div class="container">
+        <h1 class="post-title">
+  
+    5 ways to start debugging your rails code
+  
+  
+</h1>
+
+<div class="post-content">
+  <p>It can be really frustrating if you don&#39;t know how to debug your code.
+Maybe, you have an idea about what the problem is, but you don&#39;t know
+how to look into it.</p>
+
+<p>Instead of doing this:</p>
+
+<h1>(╯°□°）╯︵ ┻━┻</h1>
+
+<p>Use one of these techniques.</p>
+
+<h2>1. set a breakpoint</h2>
+
+<p>Let&#39;s say you have some code that looks like this:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">def</span> <span class="nf">create</span>
+  <span class="vi">@user</span> <span class="o">=</span> <span class="no">User</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">user_params</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="vi">@user</span><span class="p">.</span><span class="nf">save</span>
+    <span class="c1"># do something</span>
+  <span class="k">else</span>
+    <span class="c1"># do something else</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>And you think that <code>@user.save</code> is not saving the @user. My favorite way to
+look into this is to use <a href="http://pryrepl.org/">pry</a>. Install pry
+and insert a <code>binding.pry</code> into your code like so:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">def</span> <span class="nf">create</span>
+  <span class="vi">@user</span> <span class="o">=</span> <span class="no">User</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">user_params</span><span class="p">)</span>
+
+  <span class="nb">binding</span><span class="p">.</span><span class="nf">pry</span>
+  <span class="k">if</span> <span class="vi">@user</span><span class="p">.</span><span class="nf">save</span>
+  <span class="c1">#...</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>Submit the form or request again and execution will stop on that
+line. At that point, you can print useful stuff out. You might
+want to see what <code>@user.valid?</code> returns. Or, you could run <code>@user.save</code>
+to verify that it is returning <code>false</code>.</p>
+
+<p>Pry is the tool I reach for the most. Check it out if you are not
+already using it.</p>
+
+<h2>2. print stuff out</h2>
+
+<p>You can also figure out a lot of the same things by adding <code>puts</code>
+statements to your code.</p>
+
+<p>For example, instead of using pry in the example above. Put this into
+your code:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="nb">puts</span> <span class="s2">"user valid: </span><span class="si">#{</span><span class="vi">@user</span><span class="p">.</span><span class="nf">valid?</span><span class="si">}</span><span class="s2">"</span>
+<span class="vi">@user</span><span class="p">.</span><span class="nf">save</span>
+<span class="c1"># ...</span>
+</code></pre></div>
+<p>Then, go check your logs to see if your <code>@user</code> is valid.</p>
+
+<h2>3. read the exception output</h2>
+
+<p>This might sound crazy, but often times people do not read or
+think about exceptions.</p>
+<div class="highlight"><pre><code class="language-" data-lang="">`NoMethodError (undefined method 'first_name' for nil:NilClass)`
+
+Backtrace:
+app/views/users/show.html.erb:37
+# ...
+</code></pre></div>
+<p>Don&#39;t do this -  (ノಠ益ಠ)ノ彡┻━┻</p>
+
+<p>Instead, do this:</p>
+
+<ol>
+<li>think &quot;gee, something is nil that I didn&#39;t expect to be nil.&quot;</li>
+<li>open <code>app/views/users/show.html.erb</code> in your editor and go to
+line 37</li>
+<li>find out what is nil (<code>@user</code> or something similar)</li>
+<li>work backwords to figure out why that is happening</li>
+</ol>
+
+<h2>4. check network requests</h2>
+
+<p>Say, you have a feature that is using ajax and it is not working. You
+can use the network tab to see what is going on with the ajax request.</p>
+
+<p>Here is what that looks like in Google Chrome:</p>
+
+<p><img src="/img/network_tab.png" alt="network tab"></p>
+
+<p>You can get some good info just from the status code. If you see a 404,
+you might have a routes issue. If you see a 500, check the logs for an
+exception. If you see 422, try debugging your controller action.</p>
+
+<h2>5. check the logs for exceptions</h2>
+
+<p>This is a nice low-tech way to get feedback from your app. Try clearing
+your logs <code>rake log:clear</code>. Load the page or submit the form in
+question. Then, look at your development.log file. You might find that
+an exception occured in there.</p>
+
+<ol>
+<li>Clear your logs <code>rake log:clear</code>.</li>
+<li>Load the page or submit the form in question.</li>
+<li>Look through your development.log file.</li>
+</ol>
+
+<p>You might find an exception in there. This is also a useful technique
+for finding n+1 and other sql problems.</p>
+
+<div class="newsletter-cta">
+  <p>
+    <b>
+      
+        Want more?
+      
+    </b>
+  </p>
+  <p>
+    
+      Don't miss out on my next post!
+    
+  </p>
+  <!-- Begin MailChimp Signup Form -->
+  <div id="mc_embed_signup">
+    <form action="//aokolish.us9.list-manage.com/subscribe/post?u=fadcc7c47381f2394d5a3d05a&amp;id=b567f497d8" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+      <div id="mc_embed_signup_scroll">
+        <div class="field-wrap">
+          <input type="text" value="" name="FNAME" class="required" id="mce-FNAME" placeholder="Your first name">
+          <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Your email">
+          <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+          <div style="position: absolute; left: -5000px;"><input type="text" name="b_fadcc7c47381f2394d5a3d05a_b567f497d8" tabindex="-1" value=""></div>
+          <input type="submit" value="Sign me up!" name="subscribe" id="mc-embedded-subscribe" class="button">
+        </div>
+      </div>
+    </form>
+  </div>
+  <!--End mc_embed_signup-->
+</div>
+
+</div>
+
+
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      var disqus_shortname = 'aokolish';
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  <!-- Go to www.addthis.com/dashboard to customize your tools -->
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-55666b2409e17b7d" async="async"></script>
+
+
+
+      </div>
+
+      <footer>
+        <div class="container">
+          
+            <div class="recent-posts">
+              <h2>Recent Posts</h2>
+              
+              <a class="post-link" href="/blog/2015/06/22/shortcuts-for-navigating-nested-associations/">
+                <p class="post">
+                  <span class="post-title">Shortcuts for navigating nested associations</span>
+                  <span class="post-date">June 22, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/06/10/how-much-sql-do-you-need-to-know-to-land-a-rails-job/">
+                <p class="post">
+                  <span class="post-title">How much SQL do you need to know to land a Rails job?</span>
+                  <span class="post-date">June 10, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/26/how-to-simplify-active-record-scopes-that-reference-other-tables/">
+                <p class="post">
+                  <span class="post-title">How to simplify Active Record scopes that reference other models</span>
+                  <span class="post-date">May 26, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/21/3-resources-that-helped-me-get-started-with-refactoring/">
+                <p class="post">
+                  <span class="post-title">3 resources that helped me get started with refactoring</span>
+                  <span class="post-date">May 21, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/03/31/correcting-indentation-in-vim/">
+                <p class="post">
+                  <span class="post-title">Correcting Indentation in Vim</span>
+                  <span class="post-date">March 31, 2015</span>
+                </p>
+              </a>
+              
+              <p><a class="all-posts" href="/archive/">All posts</a></p>
+            </div>
+            <hr>
+          
+          <p class="social">
+            <a href="https://twitter.com/aokolish" target="_blank">
+              <i class="icon-twitter"></i>
+            </a>
+            <a href="https://github.com/aokolish" target="_blank">
+              <i class="icon-github"></i>
+            </a>
+            <a href="mailto:alex.okolish@gmail.com">
+              <i class="icon-envelope"></i>
+            </a>
+          </p>
+        </div>
+      </footer>
+
+      <script>
+          var _gaq=[['_setAccount','UA-27939733-1'],['_trackPageview']];
+          (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+          g.src='//www.google-analytics.com/ga.js';
+          s.parentNode.insertBefore(g,s)}(document,'script'));
+      </script>
+    </body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        
+        <title>
+          
+            Using Tmux and Tmuxinator
+          
+        </title>
+        
+        <meta name="description" content=" I have been using tmux for the past few months and it has become one of
+my favorite programming tools. I love the window management for keeping
+my...">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="google-site-verification" content="XA5dKuI49RXTWn5RxMyobOXEGgB6NjrbvtMFR30zbsY" />
+        <meta name="keywords" content="ctags, vim, productivity, ruby">
+        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+        <link href='http://fonts.googleapis.com/css?family=Signika+Negative:400,700|Noto+Serif:400,700|Sansita+One' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" href="/css/base.css">
+    </head>
+    <body>
+      <header>
+        <div class="container">
+          <h1><a href="/">aokolish</a></h1>
+          <div id="header-nav">
+            <ul class="main-menu">
+              <li><a href="/about/">About</a></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <div class="container">
+        <h1 class="post-title">
+  
+    Using Tmux and Tmuxinator
+  
+  
+</h1>
+
+<div class="post-content">
+  <p>I have been using tmux for the past few months and it has become one of
+my favorite programming tools. I love the window management for keeping
+my work organized and as automated as possible.</p>
+
+<p>Tmux is referred to as a terminal multiplexer and is similar to GNU Screen.
+Basically, a terminal multiplexer enables you to run multiple terminal sessions
+within one window.</p>
+
+<p>This is what a simple session with two windows looks like for me:
+<img src="/img/ex-tmux.png" alt="tmux example"></p>
+
+<h2>Why Use Tmux?</h2>
+
+<p>One reason I really like tmux is because it helps you keep your
+terminals very organized.  I use iTerm2 and work on web apps during the
+day. Typically, I need to run two apps at the same time - a client and a
+server. I also use command line vim for text editing. So, that means
+without tmux, I need a minimum of four terminal tabs in order to work
+on these two projects at the same time. That&#39;s already a lot of tabs to
+keep track of.</p>
+
+<p>Without tmux, I spend a lot of time looking for things. I end up looking
+for things rather than just knowing where they are. My four tabs quickly
+balloon to seven tabs as I started up rails consoles, ssh to servers, edit
+my dotfiles and so forth. Then, I have to tab through them constantly to
+find what I am looking for.</p>
+
+<p>When I use tmux, each project is contained in
+a tmux session and everything ends up being much easier to find. I
+always have vim in the first window and my server running in the second
+window. Then, I can add windows and splits as needed. I spend less time
+looking for things and can keep focused on more interesting problems.</p>
+
+<h2>Tmuxinator</h2>
+
+<p>Tmuxinator makes tmux even more awesome because it allows you to
+set up configurable sessions. For example, a minimal tmux session for me
+involves two windows - one for vim and another for running my rails
+server (pictured above). Without tmuxinator, it&#39;s about a four step process
+to get that set up to start work on a project that has to be repeated
+every time. With tmuxinator, it&#39;s a one liner - I run <code>mux blog</code>
+to start all of that instantly.</p>
+
+<h2>Getting Started With Tmuxinator</h2>
+
+<p>This is all it takes to get started (see the tmuxinator
+<a href="https://github.com/aziz/tmuxinator">readme</a> for the latest instructions):</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>gem <span class="nb">install </span>tmuxinator
+<span class="nv">$ </span>mux new some_project     <span class="c"># I like the 'mux' alias</span>
+<span class="nv">$ </span>mux open some_project    <span class="c"># to open the config in $EDITOR</span>
+</code></pre></div>
+<p>Edit the config as needed:</p>
+<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="c1"># ~/.tmuxinator/some_project.yml</span>
+
+<span class="ss">project_name: </span><span class="n">some_project</span>
+<span class="ss">project_root: </span><span class="o">~</span><span class="sr">/code/some</span><span class="n">_project</span>
+<span class="ss">tabs:
+  </span><span class="o">-</span> <span class="ss">vim: </span><span class="n">vim</span>
+  <span class="o">-</span> <span class="ss">preview: </span><span class="n">bundle</span> <span class="nb">exec</span> <span class="n">rake</span> <span class="n">preview</span>
+</code></pre></div>
+<p>Start the tmux session:
+<code>bash
+$ mux some_project
+</code></p>
+
+<h2>Other Cool Features of Tmux</h2>
+
+<p>Tmux has a plethora of features I don&#39;t have time to go into. Here are
+some of my favorites:</p>
+
+<ul>
+<li>low-bandwidth pair programming</li>
+<li>easily detach and attach to different sessions</li>
+<li>alerts to changes in other windows</li>
+<li>vim-like key bindings - keep your fingers on home row</li>
+</ul>
+
+<h2>Further Reading</h2>
+
+<ul>
+<li><a href="http://robots.thoughtbot.com/post/2641409235/a-tmux-crash-course">tmux crash course</a> from thoughtbot</li>
+<li><a href="http://pragprog.com/book/bhtmux/tmux">tmux: producive mouse-free development</a> - excellent intro
+to tmux</li>
+<li><a href="https://github.com/aziz/tmuxinator">tmuxinator</a> on github</li>
+<li><a href="https://github.com/zolrath/wemux">wemux</a> - pairing with tmux</li>
+<li><a href="http://www.youtube.com/watch?v=QxTse5Elq8s">tmux vs. screen</a>
+(youtube video)</li>
+</ul>
+
+<h2>Related Posts</h2>
+
+<ul>
+<li><a href="/blog/2015/02/16/how-to-start-your-app-in-tmux-with-one-command/">Start Your Project in Tmux With One Command</a></li>
+</ul>
+
+</div>
+
+
+
+
+      </div>
+
+      <footer>
+        <div class="container">
+          
+            <div class="recent-posts">
+              <h2>Recent Posts</h2>
+              
+              <a class="post-link" href="/blog/2015/06/22/shortcuts-for-navigating-nested-associations/">
+                <p class="post">
+                  <span class="post-title">Shortcuts for navigating nested associations</span>
+                  <span class="post-date">June 22, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/06/10/how-much-sql-do-you-need-to-know-to-land-a-rails-job/">
+                <p class="post">
+                  <span class="post-title">How much SQL do you need to know to land a Rails job?</span>
+                  <span class="post-date">June 10, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/26/how-to-simplify-active-record-scopes-that-reference-other-tables/">
+                <p class="post">
+                  <span class="post-title">How to simplify Active Record scopes that reference other models</span>
+                  <span class="post-date">May 26, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/05/21/3-resources-that-helped-me-get-started-with-refactoring/">
+                <p class="post">
+                  <span class="post-title">3 resources that helped me get started with refactoring</span>
+                  <span class="post-date">May 21, 2015</span>
+                </p>
+              </a>
+              
+              <a class="post-link" href="/blog/2015/03/31/correcting-indentation-in-vim/">
+                <p class="post">
+                  <span class="post-title">Correcting Indentation in Vim</span>
+                  <span class="post-date">March 31, 2015</span>
+                </p>
+              </a>
+              
+              <p><a class="all-posts" href="/archive/">All posts</a></p>
+            </div>
+            <hr>
+          
+          <p class="social">
+            <a href="https://twitter.com/aokolish" target="_blank">
+              <i class="icon-twitter"></i>
+            </a>
+            <a href="https://github.com/aokolish" target="_blank">
+              <i class="icon-github"></i>
+            </a>
+            <a href="mailto:alex.okolish@gmail.com">
+              <i class="icon-envelope"></i>
+            </a>
+          </p>
+        </div>
+      </footer>
+
+      <script>
+          var _gaq=[['_setAccount','UA-27939733-1'],['_trackPageview']];
+          (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+          g.src='//www.google-analytics.com/ga.js';
+          s.parentNode.insertBefore(g,s)}(document,'script'));
+      </script>
+    </body>
+</html>
