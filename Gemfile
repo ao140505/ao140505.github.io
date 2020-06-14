@@ -1,5 +1,7 @@
 source "http://rubygems.org"
 
+ruby "2.5.7"
+
 gem 'jekyll', '~> 3.0'
 gem 'redcarpet'
 gem 'sass'
